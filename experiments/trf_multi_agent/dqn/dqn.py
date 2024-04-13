@@ -4,57 +4,84 @@ import torch.optim as optim
 import numpy as np
         
 class DeepQNetwork(nn.Module):
-    def __init__(self, num_states, num_actions, num_layers, learning_rate, width):
+    def __init__(self, num_states, num_actions, num_layers, learning_rate, width, num_heads, num_enc_layers):
         super(DeepQNetwork, self).__init__()
         self.num_states = num_states
         self.width = width
         self.num_actions = num_actions
 
-        self.transformer = nn.Transformer(
-            d_model=self.num_states,
-            nhead=4,
-            num_encoder_layers=3,
-            dropout=0.1,
-            batch_first=True
-        )
-
+        # self.transformer = nn.Transformer(
+        #     d_model=self.width,
+        #     nhead=num_heads,
+        #     num_encoder_layers=num_enc_layers,
+        #     dropout=0.1,
+        #     batch_first=True
+        # )
         self.layers = nn.ModuleList([
-            nn.Linear(self.num_states, self.width),
-            nn.LayerNorm(self.width),
-            nn.ReLU(),
-            nn.Dropout(p=0.1),
-            nn.Linear(self.width, self.width),
-            nn.LayerNorm(self.width),
-            nn.ReLU(),
-            nn.Dropout(p=0.1),
-            nn.Linear(self.width, self.num_actions)
-        ])
-        self.optimizer = optim.Adam(self.parameters(), lr=learning_rate)
-        self.loss = nn.MSELoss()
+                nn.Linear(self.num_states, self.width),
+                nn.BatchNorm1d(self.width),
+                nn.ReLU(),
+                nn.Dropout(p=0.5),  # Adjust the dropout rate as needed
+                *[nn.Linear(self.width, self.width) for _ in range(num_layers)],
+                nn.BatchNorm1d(self.width),
+                nn.ReLU(),
+                nn.Dropout(p=0.5),
+                nn.Linear(self.width, self.num_actions)
+            ])
+        # self.layers = nn.ModuleList([
+        #     nn.Linear(self.num_states, self.width),
+        #     nn.LayerNorm(self.width),
+        #     nn.ReLU(),
+        #     nn.Dropout(p=0.1),
+        #     nn.Linear(self.width, self.width),
+        #     nn.LayerNorm(self.width),
+        #     nn.ReLU(),
+        #     nn.Dropout(p=0.1),
+        # ])
+
+        # self.final_layer = nn.Linear(self.width, self.num_actions)
+        self.optimizer = optim.RMSprop(self.parameters(), lr=learning_rate)
+        self.loss = nn.HuberLoss()
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
         self.to(self.device)
 
     def forward(self, state):
         self.eval()
         if state.dim() == 1:
+            # If input is 1D, add a batch dimension
             state = state.unsqueeze(0)
-        preds = self.transformer(state, state)
-        for layer in self.layers:    
-            preds = layer(preds)   
-        return preds
         
+        preds = state  # Initialize with input state
+        for layer in self.layers:
+            preds = layer(preds)
+            if isinstance(layer, nn.Linear):
+                preds = nn.functional.relu(preds)  # Apply ReLU after Linear layers
+        return preds
+    # def forward(self, state):
+    #     self.eval()
+    #     if state.dim() == 1:
+    #         state = state.unsqueeze(0)
+    #     preds = state
+    #     for layer in self.layers:    
+    #         preds = layer(preds)   
+    #     preds = self.transformer(preds, preds)
+    #     preds = self.final_layer(preds)
+    #     return preds
+
 class DQN:
-    def __init__(self, ts, num_actions, num_states, width, num_layers,batch_size, gamma, learning_rate, model_path, fine_tune_model_path=None):
+    def __init__(self, ts, num_actions, num_states, width, num_heads, num_enc_layers, num_layers,batch_size, gamma, learning_rate, model_path, fine_tune_model_path=None):
         self.ts = ts
         self.width = width
         self.num_actions = num_actions
+        self.num_heads = num_heads
+        self.num_enc_layers = num_enc_layers
         self.num_states = num_states
         self.num_layers = num_layers
         self.batch_size = batch_size
         self.model_path = model_path
         self.gamma = gamma 
         self.learning_rate = learning_rate
-        self.model = DeepQNetwork(self.num_states, self.num_actions, self.num_layers, self.learning_rate, self.width)   
+        self.model = DeepQNetwork(self.num_states, self.num_actions, self.num_layers, self.learning_rate, self.width, self.num_heads, self.num_enc_layers)   
         if fine_tune_model_path:
             self.model.load_state_dict(T.load(fine_tune_model_path+ts+'.pth'))
             self.model.eval()
@@ -63,14 +90,14 @@ class DQN:
         if np.random.rand() <= epsilon:
             actions = np.random.randint(self.num_actions)
         else:
-            print(type(state[0]),type(state))
+            # print(type(state[0]),type(state))
             state = T.tensor(state).to(self.model.device)
             preds = self.model.forward(state)
             # print(preds.shape)
             actions = T.argmax(preds).item()
             # print(actions)
         return actions
-            
+
     def learn(self, experience):
         self.model.train()
         self.model.optimizer.zero_grad()

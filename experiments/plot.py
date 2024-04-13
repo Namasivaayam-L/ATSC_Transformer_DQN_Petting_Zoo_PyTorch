@@ -4,8 +4,8 @@ import argparse,os
 
 def plot_and_save(csv_file_path):
     # Extract the file name and directory from the CSV file path
-    file_name, _ = os.path.splitext(csv_file_path)
-    plot_save_path = f"{file_name}_combined.png"
+    file_name = os.path.dirname(csv_file_path)
+    plot_save_path = f"{file_name}/plots/rewards_combined.png"
     print(plot_save_path)
     # Read the CSV data
     data = pd.read_csv(csv_file_path)
@@ -32,12 +32,17 @@ def plot_and_save(csv_file_path):
 # Parse command-line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--file", help="Path to the CSV file")
+# parser.add_argument("-o", "--outdir", help="Path to the save image file")
 args = parser.parse_args()
 
 # Check if the CSV file path is provided
 if not args.file:
     print("Please provide the CSV file path using the -f flag.")
     exit()
+# if not args.outdir:
+#     print("Please provide the save image file path using the -o flag.")
+#     exit()
 
 # Plot and save the graph
 plot_and_save(args.file)
+# plot_and_save(args.file, args.outdir)

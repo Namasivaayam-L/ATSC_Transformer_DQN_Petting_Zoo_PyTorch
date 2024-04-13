@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 from typing import Callable, Optional, Tuple, Union
 
-
 if "SUMO_HOME" in os.environ:
     tools = os.path.join(os.environ["SUMO_HOME"], "tools")
     sys.path.append(tools)
 else:
     raise ImportError("Please declare the environment variable 'SUMO_HOME'")
+
 import gymnasium as gym
 import numpy as np
 import pandas as pd
@@ -99,7 +99,7 @@ class SumoEnvironment(gym.Env):
         observation_class: ObservationFunction = DefaultObservationFunction,
         add_system_info: bool = True,
         add_per_agent_info: bool = True,
-        sumo_seed: Union[str, int] = "random",
+        sumo_seed: Union[str, int] = 48,
         fixed_ts: bool = False,
         sumo_warnings: bool = False,
         additional_sumo_cmd: Optional[str] = None,

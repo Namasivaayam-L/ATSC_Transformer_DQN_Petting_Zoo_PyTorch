@@ -1,5 +1,6 @@
 import os, sys, configparser, shutil, pandas as pd
-import dqn, memory
+from trf_dqn import DQN 
+from memory import Memory
 from tqdm import tqdm
 sys.path.append('/home/namachu/Documents/Project/pt/pett_zoo_pt/')
 
@@ -33,6 +34,7 @@ batch_size, gamma, learning_rate = (
 num_episodes, buffer_size = config["Model"].getint("num_episodes"), config["Memory"].getint("buffer_size")
 num_layers, width = config["Model"].getint("num_layers"), config["Model"].getint("width")
 num_heads, num_enc_layers = config["Model"].getint("num_heads"), config["Model"].getint("num_enc_layers")
+dim_feedforward,d_model, dropout = config["Model"].getint("dim_feedforward"),config["Model"].getint("d_model"), config["Model"].getfloat("dropout")
 epsilon, min_epsilon, decay = (
     config["Model"].getfloat("epsilon"),
     config["Model"].getfloat("min_epsilon"),
@@ -75,17 +77,18 @@ def update_csv(info, ep):
             df.to_csv(output_path + f"comb_rewards.csv", index=False, mode=mode, header=not bool(info["step"]))
         del info[stat]["ep"]
 
-
 info = {"step": 0, "state": {}, "rewards": {}}
+print(env.action_spaces['1'].n,env.observation_spaces['1'].shape)
 agents = {
-    ts: dqn.DQN(
+    ts: DQN(
         ts,
         env.action_spaces[ts].n,
         env.observation_spaces[ts].shape[0],
         width,
         num_heads, 
-        num_enc_layers, 
         num_layers,
+        dim_feedforward, 
+        dropout,
         batch_size,
         gamma,
         learning_rate,
@@ -94,10 +97,10 @@ agents = {
     )
     for ts in env.possible_agents
 }
-# print(env.action_spaces['1'].n,env.observation_spaces['1'].shape)
+
 # experience_replay = memory.Memory(buffer_size,env.observation_spaces['1'].shape[0], env.action_spaces['1'].n)
 info = {"step": 0, "state":{}, "rewards":{}}
-experience_replay = memory.Memory(buffer_size)
+experience_replay = Memory(buffer_size)
 for ep in tqdm(range(0, num_episodes), desc="Running..", unit="epsiode"):
     # print(ep)
     state, _ = env.reset()
@@ -121,7 +124,7 @@ for ep in tqdm(range(0, num_episodes), desc="Running..", unit="epsiode"):
         info["step"] += 1
         tqdm.write(f"Progress: {info['step']}/{config['Sumo'].getint('num_seconds')}", end="\r")
     # profiler.disable()
-    profiling_output_path = f"experiments/trf_multi_agent/dqn/profiling/{ep}.prof"
+    # profiling_output_path = f"experiments/trf_multi_agent/dqn/profiling/{ep}.prof"
     # profiler.dump_stats(profiling_output_path)
     epsilon = max(epsilon * decay, min_epsilon)
     env.save_csv(csv_path, ep)
