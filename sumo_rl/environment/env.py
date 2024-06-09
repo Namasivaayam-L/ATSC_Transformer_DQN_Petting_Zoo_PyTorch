@@ -502,7 +502,7 @@ class SumoEnvironmentPZ(AECEnv, EzPickle):
         EzPickle.__init__(self, **kwargs)
         self._kwargs = kwargs
 
-        self.seed()
+        self.seed(48)
         self.env = SumoEnvironment(**self._kwargs)
 
         self.agents = self.env.ts_ids
@@ -519,11 +519,11 @@ class SumoEnvironmentPZ(AECEnv, EzPickle):
         self.truncations = {a: False for a in self.agents}
         self.infos = {a: {} for a in self.agents}
 
-    def seed(self, seed=None):
+    def seed(self, seed=48):
         """Set the seed for the environment."""
         self.randomizer, seed = seeding.np_random(seed)
 
-    def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
+    def reset(self, seed: Optional[int] = 48, options: Optional[dict] = None):
         """Reset the environment."""
         self.env.reset(seed=seed, options=options)
         self.agents = self.possible_agents[:]

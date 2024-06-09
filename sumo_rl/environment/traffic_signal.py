@@ -319,7 +319,7 @@ class TrafficSignal:
         cls.reward_fns[fn.__name__] = fn
 
     reward_fns = {
-        "diff-waiting-time": _diff_waiting_time_reward,
+        "dwt": _diff_waiting_time_reward,
         "average-speed": _average_speed_reward,
         "queue": _queue_reward,
         "pressure": _pressure_reward,

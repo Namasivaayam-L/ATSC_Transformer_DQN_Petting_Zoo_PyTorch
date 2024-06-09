@@ -253,3 +253,61 @@
 #         action_logits = self.output_layer(trf_preds)
 #         # print('preds :', action_logits.shape)
 #         return action_logits
+
+
+
+        # self.final_layer = nn.Linear(self.width, self.num_actions)
+
+        # self.layers = nn.ModuleList([
+        #         nn.Linear(self.num_states, self.width),
+        #         nn.BatchNorm1d(self.width),
+        #         nn.ReLU(),
+        #         nn.Dropout(p=0.5),  # Adjust the dropout rate as needed
+        #         *[nn.Linear(self.width, self.width) for _ in range(num_layers)],
+        #         nn.BatchNorm1d(self.width),
+        #         nn.ReLU(),
+        #         nn.Dropout(p=0.5),
+        #         nn.Linear(self.width, self.num_actions)
+        #     ])
+        # self.layers = nn.ModuleList([
+        #     nn.Linear(self.num_states, self.width),
+        #     nn.LayerNorm(self.width),
+        #     nn.ReLU(),
+        #     nn.Dropout(p=0.1),
+        #     nn.Linear(self.width, self.width),
+        #     nn.LayerNorm(self.width),
+        #     nn.ReLU(),
+        #     nn.Dropout(p=0.1),
+        # ])
+        #   def forward(self, state):
+        #         self.eval()
+        #         if state.dim() == 1:
+        #             # If input is 1D, add a batch dimension
+        #             state = state.unsqueeze(0)
+                
+        #         preds = state  # Initialize with input state
+        #         for layer in self.layers:
+        #             preds = layer(preds)
+        #             if isinstance(layer, nn.Linear):
+        #                 preds = nn.functional.relu(preds)  # Apply ReLU after Linear layers
+        #         return preds
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

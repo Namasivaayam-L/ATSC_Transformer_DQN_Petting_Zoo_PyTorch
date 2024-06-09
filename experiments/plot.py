@@ -5,6 +5,7 @@ import argparse,os
 def plot_and_save(csv_file_path):
     # Extract the file name and directory from the CSV file path
     file_name = os.path.dirname(csv_file_path)
+    os.makedirs(f'{file_name}/plots/',exist_ok=True)
     plot_save_path = f"{file_name}/plots/rewards_combined.png"
     print(plot_save_path)
     # Read the CSV data
