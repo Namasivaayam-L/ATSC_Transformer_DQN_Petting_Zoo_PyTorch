@@ -33,7 +33,6 @@ class DefaultObservationFunction(ObservationFunction):
         super().__init__(ts)
 
     def __call__(self) -> np.ndarray:
-        # """Return the default observation."""
         # observations = []
         # for lane_id in self.ts.lanes:
         #     # vehicle_count = self.ts.sumo.lane.getLastStepVehicleNumber(lane_id)
@@ -52,6 +51,7 @@ class DefaultObservationFunction(ObservationFunction):
         # observation.append([total_vehicles, total_waiting_time])
         # print(observation)
         # return np.array(observation, dtype=np.float32)
+        lane_wt = {lane: [self.ts.sumo.vehicle.getAccumulatedWaitingTime(veh) for veh in self.ts.sumo.lane.getLastStepVehicleIDs(lane)] for lane in self.ts.sumo.trafficlight.getControlledLanes(self.ts.id)}
         """Return the default observation."""
         phase_id = [1 if self.ts.green_phase == i else 0 for i in range(self.ts.num_green_phases)]  # one-hot encoding
         min_green = [0 if self.ts.time_since_last_phase_change < self.ts.min_green + self.ts.yellow_time else 1]

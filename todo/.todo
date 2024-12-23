@@ -1,0 +1,86 @@
+State Updation:
+    ☐ Accumulated waiting time of each vehicle in the intersection and bin them in various bins and then send it as state.Divide the possible waiting time range into bins (e.g., 0-10 seconds, 10-20 seconds, etc.) and count the number of vehicles in each bin. This gives you a more detailed representation of the distribution.
+    
+    ✘ accumulated waiting time of each vehicle right from the start (dropped) @cancelled(24-12-23 21:33)
+
+Visualization:
+    Graphs:
+        ☐ Compare recorded values such as Accumulated waiting times, Travel Times, rewards obtained.
+        ☐ Compare TRF-DQN with other approaches such as DQN, Fixed-time, Random-Time, atleast 4 methods
+        ☐ Add graphs for local and global lossess as well for the all the various approaches.
+        ☐ Once all the above are done, look for other suggested graphs in the journal updation docx.
+    Tables:
+        ☐ Add the avg and median values of all these algorithms to a table and add it as well. (refer your B1 paper, page 13)
+        ☐ SUMO software configs
+        ☐ State values sample
+        ☐ Training configurations, Time taken and results.
+        ☐ Model Layers, Hyperparams
+        ☐ Recording data based on traffic scenarios, such as - Low, High Traffic etc (Add the vehicle counts too).
+    System Diagrams:
+        ☐ Very detailed System diagrams.
+
+
+High Level Plan:
+    Okay, let's address these weaknesses one by one with concrete steps for improvement:
+        1. Lack of Rigorous Comparison:
+            1.1 More Baselines:
+            ☐ You need to compare your TRF-DQN not just to a basic DQN, but to other relevant and established traffic signal control methods. Here are some suggestions:
+                Fixed-Time Control:
+                ☐ This is the most common real-world approach, where signal timings are pre-set based on historical data. This serves as a good baseline to show the benefits of adaptive control.
+                Webster's Method:
+                ☐ A classic traffic signal optimization method that aims to minimize delay at intersections.
+                Other DRL-based methods:
+                ☐ Research papers on traffic signal control using DRL and choose 1-2 relevant and recent methods to compare against. Look for methods that use different state representations, reward functions, or network architectures. This will provide a more comprehensive comparison within the DRL domain.
+                Example:
+                ☐ If you find a paper that uses a Deep Deterministic Policy Gradient (DDPG) or Proximal Policy Optimization (PPO) for traffic control, include it as a baseline.
+                Implementation:
+                ☐ Implement these baseline methods in your SUMO simulation environment. Ensure that the simulation setup (network, traffic demand, etc.) is the same for all methods, including your TRF-DQN.
+            1.2 Statistical Significance:
+            ☐ To demonstrate that your results are not due to random chance, you need to conduct statistical tests.
+                Multiple Runs:
+                ☐ Run each method (including all baselines and TRF-DQN) multiple times (e.g., 20-30 runs) with different random seeds. This will give you a distribution of results for each method.
+                Statistical Tests:
+                ☐ Use appropriate statistical tests to compare the performance of TRF-DQN with each baseline.
+                    t-test:
+                    ☐ If you're comparing two methods (e.g., TRF-DQN vs. DQN), a t-test can determine if the difference in means is statistically significant.
+                    ANOVA (Analysis of Variance):
+                    ☐ If you're comparing more than two methods, ANOVA can determine if there are any significant differences between the group means. If ANOVA shows a significant difference, you can then use post-hoc tests (e.g., Tukey's HSD) to perform pairwise comparisons.
+                Report p-values:
+                ☐ Report the p-values obtained from the statistical tests. A p-value less than 0.05 is generally considered statistically significant, indicating that the observed difference is unlikely to be due to chance.
+                Confidence Intervals:
+                ☐ Reporting confidence intervals (e.g., 95% CI) for the performance metrics (e.g., average waiting time) can also provide a useful measure of the uncertainty in your results.
+        2. Limited Analysis of Transformer's Impact:
+            2.1 Ablation Study:
+            ☐ This involves systematically removing or modifying parts of your model to see how it affects performance.
+                Remove Transformer Layer:
+                ☐ Train and evaluate a version of your model without the transformer layer (essentially a standard DQN with DeTr state extraction). Compare its performance to the full TRF-DQN. This will directly show the impact of the transformer.
+                Vary Transformer Parameters:
+                ☐ Experiment with different numbers of attention heads and encoder/decoder layers in the transformer. This will help you understand the influence of these hyperparameters on performance. For example, compare TRF-DQN with 1 head, 2 heads, 4 heads, etc.
+                Report Results:
+                ☐ Clearly present the results of the ablation study in tables or graphs. Show how removing the transformer or changing its parameters affects key metrics like average waiting time and reward.
+            2.2 Analysis of Attention Weights:
+            ☐ This involves visualizing the attention weights learned by the transformer.
+                Extract Attention Weights:
+                ☐ Extract the attention weights from the transformer layer during evaluation. These weights indicate which parts of the input sequence (traffic data over time) the model is focusing on.
+                Visualize Attention:
+                ☐ Create visualizations of the attention weights. This could be done using heatmaps or other visualization techniques. For example, you could create a heatmap where the x-axis represents the time steps in the input sequence and the y-axis represents the different lanes. The color of each cell would represent the attention weight, indicating how much the model is attending to that lane at that time step.
+                Interpret Results:
+                ☐ Analyze the visualizations to understand the model's behavior. For example, does the model pay more attention to recent traffic data or to data from earlier time steps? Does it focus on specific lanes during certain times of day? Provide clear interpretations of what the attention weights reveal about the model's decision-making process.
+        3. Limited Detail on State Representation and Reward Function Tuning:
+            3.1 Justification for State Representation:
+            ☐ Provide a stronger justification for using the sum of waiting times per lane as your state representation.
+                Discuss Alternatives:
+                ☐ Discuss other possible state representations (e.g., vehicle counts, density, queue lengths, traffic light phases) and explain why you chose waiting times.
+                Literature Review:
+                ☐ Cite relevant literature that supports the use of waiting times as a key indicator of traffic congestion.
+                Sensitivity Analysis:
+                ☐ Conduct a sensitivity analysis by adding or removing features from the state representation to assess its impact on performance. For example, what happens if you add vehicle counts to the state?
+            3.2 Reward Function Tuning:
+            ☐ You need to explain how you arrived at your chosen reward function.
+                Experiment with Different Combinations:
+                ☐ If you're using a combination of reward functions (waiting time, pressure, queue-based), experiment with different weightings or combinations. For example, try giving each reward function equal weight, or try giving more weight to waiting time reduction.
+                Justification for Chosen Weights:
+                ☐ Once you've found a good combination, provide a clear justification for why those weights were chosen. Explain how the different reward functions complement each other and contribute to the overall objective of optimizing traffic flow.
+                Analyze Impact of Each Reward Component:
+                ☐ Analyze the individual contributions of each reward component. For example, how does the performance change if you only use the waiting time reward? This will help you understand the importance of each component.
+    ☐ By addressing these points, you will significantly enhance the rigor and depth of your research, making it much stronger and more impactful. Remember to document all your experiments clearly and present your findings in a clear and concise manner.

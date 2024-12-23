@@ -1,5 +1,0 @@
-Visualization:
-    ☐ Compare recorded values such as Accumulated waiting times, Travel Times, rewards obtained.
-    ☐ Compare TRF-DQN with other approaches such as DQN, Fixed-time, Random-Time, atleast 4 methods
-    ☐ Add the avg and median values of all these algorithms to a table and add it as well. (refer your B1 paper, page 13)
-    ☐ Add graphs for local and global lossess as well for the all the various approaches.

@@ -1,0 +1,598 @@
+Traffic Sense: Optimizing City Traffic with
+Transformer-infused DRL and Computer Vision
+Dr. J. Angela Jennifa Sujana
+Department of Artificial Intelligence
+and Data Science (HOD)
+Mepco Schlenk Engineering College
+Sivakasi, Tamil Nadu, India
+angj enef a@mepcoeng.ac.in
+L. Namasivaayam
+Department of Artificial Intelligence
+and Data Science
+Mepco Schlenk Engineering College
+Sivakasi, Tamil Nadu, India
+namasivaayam007vijay@gmail.com
+Abstract—This paper presents an intelligent vehicular system
+for automatic traffic signal control using a modified Deep Q-
+Network (DQN) model with a transformer layer. The proposed
+model is designed to reduce the waiting time of vehicles at traffic
+signal intersections. The model utilizes a novel transformer layer
+to capture long-range dependencies within the traffic signal data.
+Additionally, it employs a DeTr vision model to extract the traffic
+state information, such as the total waiting time of vehicles per
+lane, from the video feed of the intersection. The proposed system
+is evaluated through extensive simulations conducted in a realistic
+traffic environment based on the SUMO simulator and has been
+implemented with a real-time traffic signal dataset. The results
+demonstrate that the modified DQN model with a transformer
+layer outperforms baseline DQN models and achieves significant
+improvements in reducing the average waiting time. The findings
+suggest that the proposed system has the potential to decrease
+the overall average waiting time of vehicles at traffic signal
+intersections.
+Index Terms—Detection Transformer (DeTr), Deep Reinforce-
+ment Learning (DRL), Deep Q-Network (DQN), Simulation of
+Urban Mobility (SUMO)
+• Transformer-based DRL for Optimized Flow The DRL
+agents are guided by a carefully designed reward function
+that prioritizes minimizing average waiting time across all
+lanes, leading to smoother and more efficient traffic flow.
+Now, let’s delve into the fundamental equations that under-
+pin the Deep Q-Network (DQN) algorithm, a key component
+of our proposed approach for traffic signal control. These
+equations provide insights into how the agent learns and
+updates its Q-value function based on experiences gained from
+interacting with the environment.
+1) Bellman Equation for Optimal Q-Value: While not
+directly involved in updating the Q-value function during
+Q-learning, the Bellman equation for the optimal Q-
+value function provides the theoretical foundation for
+Q-learning. It expresses the relationship between the
+optimal Q-value of a state-action pair and the Q-values
+of subsequent state-action pairs.
+
+ 
+q ∗(s, a) = p(s′ , r, a) r + γ max
+ q
+ ∗ (s
+′ ,
+ a
+′
+ )
+ (1)
+a
+′
+where:
+• (s, a): Represents the state-action pair.
+• p(s′
+ , r, a): Probability of transitioning to state s
+′
+with reward r after taking action a in state s.
+• r: Immediate reward.
+• γ: Discount factor.
+• maxa′ q ∗(s′ , a′
+): Maximum expected future reward
+achievable from the next state s′ , considering all
+possible actions a′ .
+2) Q-Learning Update Rule: The Q-learning update rule
+defines how the Q-value function is iteratively updated
+based on observed experiences. It reflects the agent’s
+learning process from interacting with the environment
+and aims to improve its policy over time.
+
+ 
+′ ′
+Q(s, a) = Q(s, a) + α r + γ max
+ Q(s
+ ,
+ a
+ )
+ −
+ Q(s,
+ a)
+a′
+(2)
+where:
+• Q(s, a): Current estimate of the expected future
+reward achievable by taking action a in state s.
+• α: Learning rate.
+• r: Immediate reward.
+• γ: Discount factor.
+• maxa′ Q(s′, a′
+ ): Maximum expected future reward
+achievable from the next state s′ , considering all
+possible actions a′ .
+3) Loss Function for Training DQN: The loss function
+used during the training of a DQN quantifies the dis-
+crepancy between the predicted Q-value and the target
+value. It guides the learning process by minimizing the
+difference between the estimated and target Q-values.
+2
+
+ Loss = r + γ max
+ Q(s
+′ ,
+ a
+′ ;
+ θ
+′
+ )
+ −
+ Q(s,
+ a;
+ θ)
+ (3)
+a
+′
+where:
+• r: Immediate reward.
+• γ: Discount factor.
+′ ′ ′
+• maxa′ Q(s , a ; θ ): Maximum expected future re-
+ward achievable from the next state s′ , considering
+all possible actions a′ , based on the target policy
+with parameters θ′ .
+• Q(s, a; θ): Q-value predicted by the DQN for taking
+action a in state s, with parameters θ representing
+the weights and biases of the neural network.
+The effectiveness of DQN in learning through experience
+replay and its demonstrated success in various tasks make it
+a promising solution for tackling the dynamic challenges of
+traffic management, as demonstrated in [4].
+E. Vision-based Traffic State Extraction
+DeTr models offer a powerful way to extract real-time
+traffic information like vehicle count and waiting times from
+camera footage, providing valuable input for the DQN model.
+Unlike traditional methods that rely on loop detectors or image
+processing algorithms, DeTr models leverage the power of
+deep learning for object detection, and for tracking, we use
+the open-cv package in Python. The advantages of DeTr are
+as follows:
+• Simplicity Unlike many modern detectors with complex
+pipelines, DeTr boasts a surprisingly simple architecture.
+This makes it easier to integrate into our system.
+• Efficiency DeTr can be implemented with just a few
+hundred lines of code, and inference can be achieved in
+under 50 lines using PyTorch. This efficiency is crucial
+for the real-time processing of traffic camera footage.
+• Object Detection and Tracking DeTr is specifically
+designed for object detection and tracking, making it ideal
+for extracting relevant traffic state information from video
+data.
+F. Multi-Agent DRL for Traffic Signal Control
+Multi-agent DRL algorithms are particularly well-suited for
+traffic signal control in large-scale networks, where multiple
+intersections require coordination. [5] proposed a GAN-based
+multi-agent DRL approach for decentralized traffic signal
+control, while [6] developed a multi-agent DRL algorithm
+for large-scale traffic signal control. These approaches aim to
+improve coordination among agents and achieve better overall
+network performance [7].
+Fig. 1. This figure represents the overall system design of our idea. As you
+can see from a traffic signal, we use DeTr to extract state i.e total waiting
+time for every lane, and send it as input to Transformer-based DQN which
+returns actions, which in return is implemented in the environment
+H. Research Contributions and Anticipated Impact
+Our research makes significant contributions to the field of
+traffic management. Firstly, we develop and evaluate a novel
+decentralized Transformer-based DQN architecture for traffic
+signal control trained using a reward function based on the
+difference in waiting time in the SUMO environment, as well
+as leveraging the power of Transformer-based object detection
+using Pre-Trained DeTr for extracting state from real-time
+traffic signal videos and use it for evaluating the transformer
+based DQN model trained earlier. Secondly, we demonstrate
+significant performance gains in average waiting time reduc-
+tion and rewards compared to traditional and ordinary DQN
+methods, showcasing the potential of our approach to improve
+traffic flow in urban environments significantly. This paves the
+path for a future where traffic signals dynamically adapt to
+real-time traffic patterns, leading to smoother flow, reduced
+congestion, and improved urban mobility.
+III. SYSTEM MODEL AND PROBLEM
+FORMULATION
+Our system design is shown in Fig. 1, As you can see the
+state is being extracted from the traffic signal using DeTr and
+it is passed to the transformer-based DQN agent as input, and
+our proposed model predicts the actions and then they have
+been implemented in the environment. For clear understand-
+ing Fig. 1 contains a single intersection, while training and
+implementation we’ve used a Multi-agent approach in which
+each intersection of the road network shown in 3 or 8 contains
+an individual transformer-based DQN agent.
+The traffic signal control system can be modeled as a
+Markov Decision Process (MDP) [5], [19], where an agent
+operates within a virtual simulation of the traffic network.
+The agent analyzes current traffic conditions, represented by
+various variables such as vehicle positions, speeds, queue
+lengths, traffic light phases, and time-related features. The
+actions available to the agent include changing traffic light
+phases, adjusting signal timings, and implementing priority
+rules. The reward function evaluates the performance of the
+agent based on desired traffic outcomes, such as minimizing
+average waiting time. The challenge of optimizing traffic
+signal management can be expressed as a problem aimed at
+maximizing the expected reward over time, as indicated in a
+reference [4]:
+max E[rt |st, at]
+ (4)
+where:
+• At time step t, rt symbolizes the reward acquired.
+• st signifies the state of the traffic network during time
+step t.
+• at denotes the action taken by the agent at time step t.
+A. Deep Q-Network
+Deep Q-learning (DQN) is an algorithm within the domain
+of reinforcement learning that has emerged as a promising
+approach for optimizing traffic signal control [19]. It combines
+deep learning with Q-learning. The core principle of DQN
+involves learning a Q-function, which estimates the expected
+future reward for taking a particular action in each state.
+This Q-function is represented by a neural network, which
+is trained using experience replay, a technique that allows
+the agent to learn from past experiences. The DQN agent
+operates by repeatedly selecting actions, receiving rewards,
+storing experiences, and updating the Q-function.
+B. Reinforcement Learning Environment
+When incorporating Deep Reinforcement Learning (DRL)
+into traffic signal management, precisely specifying the state,
+action, and reward components is crucial. These elements
+establish the core environment for the DRL agent to interact
+with and learn from the traffic system.
+State: To effectively choose traffic signal timing, our system
+utilizes a state representation that captures crucial information
+about the current traffic situation. We prioritize a concise state
+design that still provides adequate information for the DRL
+Fig. 2. This figure represents the real-time environment
+Fig. 3. This figure represents the architecture of our Transformer-based DQN
+model, starting from the input till the prediction of actions.
+agent to select optimal actions. As shown in Fig. 1 and in Fig.
+4 our state representation focuses on the sum of waiting times
+for all vehicles in each lane. This allows the DRL agent to
+understand the overall congestion level within each lane at the
+intersection. The length of the state vector reflects the number
+of lanes being managed by the system. Fig. 2 represents the
+lane number count, as you can see only the incoming lanes are
+taken into account and each incoming lane has 2 sub-lanes.
+While the states are extracted waiting time of each sub-lane
+will be given individually due to SUMO software constraints.
+Hence in Fig. 2 since there are eight lanes the state will have
+a length of eight.
+Action: The Deep Q-Network (DQN) model with a trans-
+former layer plays a critical role in selecting the optimal action
+for traffic signal control. After processing the state information
+(e.g., total waiting time per lane), the DQN model outputs
+an array of length 4. The model predicts the most effective
+action based on the learned traffic dynamics. The length of
+the output array (4 in this case) corresponds to the number of
+lanes at the intersection, and as shown in Fig. 3 each element
+represents the priority for assigning a green signal to that lane.
+The action selection process utilizes a max-pooling strategy.
+The DQN model identifies the index within the output array
+that has the highest value. This index then translates to the
+lane that should be granted a green signal in the next time
+step, with the remaining lanes receiving red lights.
+Reward The effectiveness of the DRL agent in learning
+optimal traffic signal control strategies hinges on a well-
+designed reward function. In our system, we employ several
+reward functions tailored to different aspects of intersection
+management. The first reward function incentivizes the DQN
+model to prioritize actions that minimize the total waiting time
+experienced by vehicles within the intersection. Here’s how
+these reward functions operate:
+1) Difference in Waiting Time Reward Function: The
+DQN model receives a reward when the difference in
+total waiting time at the intersection decreases after
+a traffic light phase change. The reward magnitude is
+proportional to the reduction in waiting time difference,
+encouraging the agent to balance traffic flow efficiently
+between different directions.
+2) Pressure-based Reward Function: In addition to the
+waiting time difference, we incorporate a pressure-based
+reward function. This function rewards the agent based
+on the reduction in pressure at the intersection after
+each phase change. Pressure, defined as a combination
+of vehicle counts and waiting times, serves as a proxy
+for congestion levels. The agent is motivated to alleviate
+congestion promptly, thereby improving overall traffic
+efficiency.
+3) Queue-based Reward Function: Lastly, the queue-
+based reward function rewards the DQN model for
+reducing the length of vehicle queues at the intersection.
+A decrease in queue length signifies improved traffic
+flow and reduced waiting times for vehicles. The reward
+is scaled according to the magnitude of queue reduction,
+ensuring efficient management of traffic queues.
+Fig. 4. This figure represents the architecture of our Transformer-based DQN
+model, starting from the input till the prediction of actions.
+Conversely, under all reward functions, the DQN model
+receives penalties if the respective metrics (waiting time
+difference, pressure, or queue length) increase after a phase
+change. This multi-faceted approach enables the agent to
+adapt dynamically to varying traffic conditions, ultimately
+optimizing intersection performance and enhancing the overall
+traffic management system.
+C. Transformer-based DQN (TRF-DQN)
+To address the problem of traffic signal control, we pro-
+pose a modified DQN model with a transformer layer. The
+transformer layer is incorporated into the DQN model to
+capture long-range dependencies within the traffic signal data.
+Additionally, we employ a DeTr vision model to extract the
+traffic state information, such as the vehicle count and total
+waiting time per lane, from the video feed of the intersection.
+Fig. 5. This figure represents the configuration in which the model has been
+trained.
+Fig. 6. This figure represents the architecture of our DeTr model, it uses Resnet-101 to extract image features and a Transformer Encoder and decoder
+Architecture, and finally, the bounding boxes are returned by the Feed-forward networks. The image to the right represents the outputs of the DeTr model
+which are plotted in the real-time dataset that we’ve collected.
+1) Transformer Layer:: The transformer layer is a key
+component of the proposed DQN model. It is inspired by the
+transformer architecture, which has achieved state-of-the-art
+results in natural language processing and other sequence-
+to-sequence tasks. The transformer layer allows the model
+to capture long-range dependencies within the traffic signal
+data, which is crucial for effective traffic signal control. The
+transformer layer consists of multiple self-attention heads,
+which enable the model to attend to different parts of the input
+sequence and learn relationships between them. Our model
+architecture is represented in Fig. 4. As you can see, at first our
+state is passed on through the standard transformer layer, with
+an encoder and a decoder. Then the output of the transformer
+is passed on to the Feedforward network, and then the action is
+predicted. The self-attention mechanism is defined as follows:
+
+ QK T
+ 
+Attention(Q, K, V ) = softmax √
+ V
+ (5)
+dk
+where:
+• (Q), (K), and (V ) are query, key, and value matrices,
+respectively.
+• dk is the dimension of the key vectors.
+The transformer layer also includes a feed-forward network,
+which is applied to the output of the self-attention mechanism.
+The feed-forward network is defined as follows:
+FFN(x) = max(0, xW1 + b1 )W2 + b2
+ (6)
+where:
+• (W1 ), (b1), (W2 ), and (b2) are weight matrices and bias
+vectors.
+2) Feed Forward Layer: Following the transformer layer in
+your DQN with the Transformer model, a feedforward network
+acts as a final processing step before generating the Q-value
+predictions for each action, as represented in Fig. 4. This
+network is a multi-layered perceptron (MLP) that refines the
+information extracted by the transformer. Here’s a breakdown
+of the feedforward network’s role:
+Input It receives the output from the transformer layer. This
+output represents the state representation that has been pro-
+cessed by the transformer to capture long-range dependencies
+within the traffic data.
+Hidden Layers The feedforward network typically consists
+of one or more fully connected hidden layers. These layers
+further transform the data using activation functions like ReLU
+(Rectified Linear Unit). This allows the network to learn
+complex, non-linear relationships between the features within
+the state representation.
+Dropout A dropout layer might be included within the
+network. Dropout randomly drops a certain percentage of
+neurons during training, helping to prevent overfitting and
+improve the network’s generalization capabilities.
+Output Layer The final layer of the feedforward network
+has an output size equal to the number of available actions in
+your environment (typically the number of lanes in the inter-
+section). This layer generates the Q-values, which represent
+the predicted future reward for each possible action (granting
+a green light to a specific lane).
+3) DeTr Model Architecture: The DeTr vision model is
+used to extract the traffic state information from the video feed
+of the intersection. The DeTr model is a state-of-the-art object
+detection model that utilizes a transformer architecture [17]
+and its entire architecture along with the output is represented
+in Fig. 6. It can detect and segment objects in images with high
+accuracy. In our work, we use the DeTr model to detect and
+segment vehicles in the video feed. We then use the detected
+vehicles and waiting time to estimate the traffic state, such
+as the vehicle count and total waiting time per lane. Here’s a
+breakdown of the core DeTr components:
+•
+ ResNet-101 Backbone: A ResNet-101 backbone pro-
+cesses the input image to generate a lower-resolution
+feature map capturing essential visual information [18].
+•
+ Transformer Encoder-Decoder: This core component
+leverages a transformer architecture. The encoder pro-
+cesses the feature map from the CNN backbone, while the
+decoder utilizes a set of learned positional embeddings
+(object queries) to decode the information and predict
+object detections [17].
+• Prediction Feed-Forward Networks (FFNs): These net-
+works take the decoder output and predict the final
+detection information, including bounding boxes, class
+labels, and a special ”no object” class to handle empty
+slots in the predicted set.
+4) Tracking Vehicles with dlib: While DeTr excels at object
+detection, we employ the dlib library for vehicle tracking
+across consecutive video frames. This allows us to extract
+valuable traffic state information beyond just the initial de-
+tections provided by DeTr.
+• Object Tracking with dlib: DeTr provides bounding boxes
+representing detected vehicles in each frame. We utilize
+dlib’s tracking capabilities to follow these bounding boxes
+across subsequent frames. This process enables us to es-
+timate vehicle movement and calculate wait times within
+each lane.
+• Feature Extraction: Based on the detected and tracked
+vehicles, the system extracts the following traffic state
+features for each lane:
+• Vehicle Count per Lane: The total number of vehicles
+currently present in each lane (calculated based on the
+number of detected bounding boxes).
+• Waiting Time: The estimated average time vehicles have
+spent waiting in each lane (calculated based on vehicle
+speed and position obtained through dlib tracking).
+5) Transformer-based DQN Model Configuration: The
+model has been trained with the configuration mentioned in
+Fig. 5 in the simulation using SUMO. Once completed, the
+state extracted from the real-time traffic dataset video is passed
+as states to the trained model and the actions are predicted.
+Training Parameters
+• Training Parameters:
+– Episodes (num episodes): Number of training
+rounds.
+– Batch Size (batch size): Number of transitions used
+for each learning update.
+– Learning Rate (learning rate): Controls how quickly
+the model adapts.
+• Exploration Strategy:
+– Epsilon (ϵ): Chance of taking a random action (ex-
+ploration).
+– Decay (decay): Rate at which exploration decreases
+over time.
+– Discount Factor (γ): Importance of future rewards.
+– Minimum Exploration (min epsilon): Lower bound
+for random action chance.
+• Transformer Parameters:
+– Attention Heads (num heads): Number of parallel
+attention mechanisms.
+Fig. 7. This figure represents the architecture of our Transformer-based DQN
+model, starting from the input till the prediction of actions.
+Fig. 8. This figure represents the architecture of our Transformer-based DQN
+model, starting from the input till the prediction of actions.
+– Encoder Layers (num enc layers): Number of layers
+for processing input data.
+– Embedding Size (width): Dimensionality of internal
+model representations.
+– Fine-tuning (fine tune): Whether to load pre-trained
+model weights (fine tune model path).
+• Memory Buffer:
+– Memory (buffer size): Maximum number of experi-
+ences stored for training.
+D. SUMO
+SUMO (Simulation of Urban Mobility) is an open-source
+powerhouse for researchers and developers in the field of
+Intelligent Transportation Systems (ITS). It allows for in-depth
+analysis of traffic dynamics by simulating the behavior of
+individual vehicles, including their movement, acceleration,
+and deceleration. This microscopic approach provides a de-
+tailed picture of how traffic interacts within a network [20].
+SUMO excels at modeling complex road networks. It can
+handle diverse traffic scenarios, from busy city intersections
+to high-speed highways, by incorporating various road types,
+junctions, and traffic lights. The Fig. 7 represents a single
+intersection with a 2-lane format. This flexibility makes it ideal
+for researchers who want to test and evaluate different traffic
+Fig. 9. This figure represents the architecture of our Transformer-based DQN
+model, starting from the input till the prediction of actions.
+Fig. 10. This figure plots the waiting times recorded for both the traditional
+DQN agent (red line) and the proposed transformer-based DQN agent (blue
+line) during the testing phase after training them both with the Difference in
+waiting time reward function
+signal control strategies. By simulating different signal timing
+plans and optimization algorithms, SUMO helps researchers
+identify strategies that can improve traffic flow and reduce
+congestion. Beyond core traffic simulation, SUMO integrates
+seamlessly with various transportation analysis tools. This al-
+lows researchers to visualize traffic networks, generate realistic
+traffic data, and analyze traffic performance metrics like travel
+time, queue length, and even emissions. Additionally, SUMO
+boasts functionalities for modeling public transportation sys-
+tems, including buses, trams, and trains. In essence, SUMO
+offers a comprehensive and accessible platform for researchers
+and developers to explore traffic flow and test innovative traffic
+management strategies.
+The SUMO configuration file as shown in Fig. 9 defines
+various parameters for the simulated environment, including:
+• Network (net file): Defines the road layout, including
+lanes, lengths, and intersections. Fig. 8 shows the road
+network on which our model was trained.
+• Traffic Demand (route file): Specifies the origin, desti-
+nation, and route for each vehicle.
+• Simulation Duration (num seconds): The total simula-
+tion time in seconds.
+• Yellow Time (yellow time): The duration of the yellow
+light phase in seconds.
+• Green Time Limits (min green, max green): The
+minimum and maximum allowed green light duration
+(seconds) per phase.
+• Reward Function (reward fn): The method used to
+evaluate the performance of an agent.
+IV. RESULTS & IMPLEMENTATIONS
+This section details the implementation aspects and evalu-
+ation methodology of our Transformer-based DQN approach
+for traffic signal control.
+The DQN with Transformer model was implemented with
+specific configuration parameters as outlined in the Model
+Fig. 11. This figure plots the waiting times recorded for both the traditional
+DQN agent (red line) and the proposed transformer-based DQN agent (blue
+line) during the testing phase after training them both with the Pressure based
+reward function
+Fig. 12. This figure plots the waiting times recorded for both the traditional
+DQN agent (red line) and the proposed transformer-based DQN agent (blue
+line) during the testing phase after training them both with the Queue based
+reward function
+section. As mentioned in Fig. 5 the learning rate employed for
+weight updates is set at 0.0003, while the gamma parameter
+is established at 0.9, influencing rewards for future discounted
+outcomes. The initial exploration rate, denoted as epsilon,
+starts at 0.9, with a minimum continuous exploration rate
+of 0.0009. A decay factor of 0.9 is applied to regulate the
+reduction in exploration pace. The neural network architecture
+involves five layers, with each hidden layer having a width of
+4. All the values are stored using NumPy arrays. Using these
+parameters discussed we configured our model and trained it
+for 12 hours and extracted the following results.
+Fig. 13. This figure shows the rewards obtained by the traditional DQN
+Agent.
+Fig. 14. This figure shows the rewards obtained by the proposed Transformer-
+based DQN Agent .
+Fig. 15. This figure shows the implementation of the proposed transformer-
+based DQN agent in a real-time single intersection traffic signal, with 4 videos
+for 4 lanes present in that signal. The red border around the videos represents
+the red phase that has and the green border represents the green phase of that
+lane.
+We assessed the effectiveness of the DQN with the Trans-
+former model using the ”difference in waiting time”, ”queue
+based” and ”pressure based” reward functions. These functions
+encourages the transformer-based DQN agent to minimize
+total waiting time, queue length and pressure at the intersec-
+tion over consecutive traffic light phases. We evaluated the
+model’s performance by running the training process for 1000
+episodes as mentioned earlier. During training, we monitored
+key metrics like rewards obtained by the agent and mean
+waiting time. These metrics were stored in CSV format for
+further analysis. In the figures Fig. 10, Fig. 11, Fig. 12 the
+mean waiting time of both the traditional DQN agent and
+the Transformer-based DQN agent have been visualized for
+the above mentioned rewards functions individually and the
+area covered in red represents the waiting time of vehicles
+experienced in the entire road network recorded for the tra-
+ditional DQN and the area covered in blue represents the
+waiting time of vehicles experienced with transformer-based
+DQN across the road network and at last The TRF-DQN in the
+legend of the graph in these figures represents the proposed
+transformer-based DQN agent. In all of these figures Fig. 10,
+Fig. 11, Fig. 12 the DQN system has a consistently higher
+mean waiting time than the TRF-DQN system across all the
+rewards functions. We have also visualized the rewards ob-
+tained by both normal DQN Agent in Fig. 13 and the rewards
+obtained by the proposed Transformer-based DQN Agent in
+Fig. 14. As you can see, the proposed Transformer-based
+DQN Agent outperforms the traditional ordinary DQN Agent,
+by achieving higher rewards at earlier stages of the training
+phase compared to its counterpart. We’ve also implemented the
+proposed transformer-based DQN agent in real-time Fig. 15,
+by extracting state values using DeTr from the videos collected
+in real-time traffic signals in our city. This state is then passed
+on to the trained transformer-based DQN agent, which has
+performed well in SUMO environment and predicted actions.
+We’ve implemented this by developing our own simulator
+which is capable of extracting states from multiple videos,
+making it suitable for a multi-agent environment as proposed
+and passing the state as input to our proposed model which
+predicts the action for that traffic signal intersection. Our
+simulation software is capable of simulating real-time videos,
+but due to inaccuracies in calculating metrics we couldn’t post
+the output of our simulator in this paper.
