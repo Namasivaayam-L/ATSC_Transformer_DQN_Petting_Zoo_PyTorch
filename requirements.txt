@@ -41,7 +41,7 @@ pytz==2024.1
 seaborn==0.13.2
 shutilwhich==1.1.0
 six==1.16.0
--e git+https://github.com/Namasivaayam-L/ATSC_Transformer_DQN_Petting_Zoo_PyTorch.git@cd05a5b6c66ddabae4df7f0b852a1418cb70e42c#egg=sumo_rl
+# -e git+https://github.com/Namasivaayam-L/ATSC_Transformer_DQN_Petting_Zoo_PyTorch.git@cd05a5b6c66ddabae4df7f0b852a1418cb70e42c#egg=sumo_rl
 sumolib==1.20.0
 sympy==1.12.1
 tempdir==0.7.1

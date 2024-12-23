@@ -10,13 +10,13 @@ class DeepQNetwork(nn.Module):
         self.width = width
         self.num_actions = num_actions
 
-        # self.transformer = nn.Transformer(
-        #     d_model=self.num_states,
-        #     nhead=num_heads,
-        #     num_encoder_layers=num_enc_layers,
-        #     dropout=0.1,
-        #     batch_first=True
-        # )
+        self.transformer = nn.Transformer(
+            d_model=self.num_states,
+            nhead=num_heads,
+            num_encoder_layers=num_enc_layers,
+            dropout=0.1,
+            batch_first=True
+        )
         
         self.layers = nn.ModuleList([
             nn.Linear(self.num_states, self.width),
@@ -36,7 +36,8 @@ class DeepQNetwork(nn.Module):
 
         self.optimizer = optim.RMSprop(self.parameters(), lr=learning_rate)
         self.loss = nn.HuberLoss()
-        self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
+        self.device = T.device('cpu')
+        # self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
         self.to(self.device)
   
     def forward(self, state):
@@ -44,7 +45,7 @@ class DeepQNetwork(nn.Module):
         if state.dim() == 1:
             state = state.unsqueeze(0)
         preds = state
-        # preds = self.transformer(state, state)
+        preds = self.transformer(state, state)
         for layer in self.layers:    
             preds = layer(preds)   
         return preds
@@ -64,7 +65,7 @@ class DQN:
         self.learning_rate = learning_rate
         self.model = DeepQNetwork(self.num_states, self.num_actions, self.num_layers, self.learning_rate, self.width, self.num_heads, self.num_enc_layers)   
         if fine_tune_model_path:
-            self.model.load_state_dict(T.load(fine_tune_model_path+ts+'.pth'))
+            self.model.load_state_dict(T.load(fine_tune_model_path+ts+'.pth',map_location = self.model.device))
             self.model.eval()
             print(f"Loaded {ts} Model Successfully...!")
     def act(self, state, epsilon):

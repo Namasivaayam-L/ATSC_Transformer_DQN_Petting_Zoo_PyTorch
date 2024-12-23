@@ -43,7 +43,7 @@ os.makedirs(output_path, exist_ok=True)
 os.makedirs(csv_path, exist_ok=True)
 os.makedirs(model_path, exist_ok=True)
 shutil.copyfile(ini_file, output_path + "config.ini")
-shutil.copyfile(os.getcwd()+'/experiments/trf_multi_agent/dqn/dqn.py', model_path + "dqn-model.py")
+shutil.copyfile(os.getcwd()+'/experiments/trf_multi_agent/dqn/dqn.py', model_path + "model.py")
 
 env = parallel_env(
     net_file=config["Sumo"]["net_file"],

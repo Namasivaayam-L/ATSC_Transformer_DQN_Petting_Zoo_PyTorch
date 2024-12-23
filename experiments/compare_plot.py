@@ -22,10 +22,17 @@ for rf in ['dwt','pressure','queue']:
     
     plt.figure(figsize=(10, 6))
     
-    plt.plot(x, y1, label='DQN', color='blue')
-    plt.plot(x, y2, label='TRF-DQN', color='red')
-    
-    plt.title(f'{col_val} Comparison DQN vs TRF-DQN')
+    # plt.plot(x, y1, label='DQN', color='blue')
+    # plt.plot(x, y2, label='TRF-DQN', color='red')
+
+    plt.plot(x, y1, label='DQN', color='red', linestyle='--', linewidth=2)
+    plt.plot(x, y2, label='TRF-DQN', color='blue', linestyle='-', linewidth=2)
+
+    plt.fill_between(x, y1, y2, where=(y2 >= y1), interpolate=True, color='blue', alpha=0.3)
+    plt.fill_between(x, y1, y2, where=(y2 < y1), interpolate=True, color='red', alpha=0.8)
+
+
+    plt.title(f'{rf} {col_val} Comparison DQN vs TRF-DQN')
     plt.xlabel('Time Step')
     plt.ylabel(col_val)
     plt.legend()
@@ -37,8 +44,9 @@ for rf in ['dwt','pressure','queue']:
         greatgrandparent = os.path.dirname(grandparent)
         plot_dir = os.path.dirname(os.path.dirname(os.path.dirname(path)))+'/plots/'
         os.makedirs(plot_dir, exist_ok=True)
-        print(plot_dir+f'{rf}_{col_val}.png')
-        return plot_dir+f'{rf}_{col_val}.png'
+        if 'trf' in plot_dir:    
+            print(plot_dir+f'{rf}_{col_val}_line_dash_fill.png')
+        return plot_dir+f'{rf}_{col_val}_line_dash_fill.png'
     
     plt.savefig(gg_par_dir(csv_1))
     plt.savefig(gg_par_dir(csv_2))
