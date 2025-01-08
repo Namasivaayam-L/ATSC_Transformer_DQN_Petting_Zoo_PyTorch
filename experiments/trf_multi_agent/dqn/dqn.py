@@ -3,10 +3,6 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 
-import torch.nn as nn
-import torch.optim as optim
-import torch
-
 class DeepQNetwork(nn.Module):
     def __init__(self, num_states, num_bins, num_actions, embedding_dim, num_heads, num_enc_layers, width, learning_rate):
         super(DeepQNetwork, self).__init__()
