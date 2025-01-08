@@ -1,0 +1,4 @@
+tar -xvf sumo.tar.gz
+cd sumo
+makepkg -si
+sudo pacman -S texlive-basic texlive-latexextra texlive-fontsrecommended

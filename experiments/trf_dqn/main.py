@@ -2,9 +2,8 @@ import os, sys, configparser, shutil, pandas as pd
 from trf_dqn import DQN 
 from memory import Memory
 from tqdm import tqdm
-sys.path.append('/home/namachu/Documents/Project/pt/pett_zoo_pt/')
+sys.path.append('/home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/')
 
-# import cProfile
 from sumo_rl import parallel_env
 
 if "SUMO_HOME" in os.environ:

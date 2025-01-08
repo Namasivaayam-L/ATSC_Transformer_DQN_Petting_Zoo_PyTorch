@@ -17,8 +17,6 @@ data3 = []  # Empty data
 hist3, _ = np.histogram(data3, bins=bin_edges)
 print("Histogram 3 (Empty):", hist3, "Length:", len(hist3)) # Output: [0 0 0 0 0] Length: 5
 
-import numpy as np
-
 def create_waiting_time_bins(lane_wt, bin_edges):
     """Creates bins for waiting times.
 
@@ -31,8 +29,8 @@ def create_waiting_time_bins(lane_wt, bin_edges):
         Raises ValueError if bin_edges is None or empty.
     """
 
-    if bin_edges is None or not bin_edges:
-        raise ValueError("bin_edges must be provided and not empty.")
+    if bin_edges is None or not isinstance(bin_edges, (list, np.ndarray)) or len(bin_edges) == 0:
+        raise ValueError("bin_edges must be provided and non-empty.")
     
     bin_edges = np.array(bin_edges) #Convert to numpy array for efficiency
     num_bins = len(bin_edges) - 1 #Number of bins is always len(edges) - 1
