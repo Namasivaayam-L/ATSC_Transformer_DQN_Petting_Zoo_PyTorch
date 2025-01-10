@@ -32,6 +32,7 @@ def load_config(ini_file):
         "gamma": config["Model"].getfloat("gamma"),
         "learning_rate": config["Model"].getfloat("learning_rate"),
         "num_episodes": config["Model"].getint("num_episodes"),
+        "test_num_episodes": config["Model"].getint("test_num_episodes"),
         "num_bins": config["Sumo"].getint("num_bins"),
         "buffer_size": config["Memory"].getint("buffer_size"),
         "num_states": config["Sumo"].getint("num_states"),
