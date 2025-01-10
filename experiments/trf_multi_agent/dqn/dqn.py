@@ -7,13 +7,15 @@ class DeepQNetwork(nn.Module):
     def __init__(self, num_states, num_bins, num_actions, embedding_dim, num_heads, num_enc_layers, width, learning_rate):
         super(DeepQNetwork, self).__init__()
 
-        self.num_states = num_states
-        self.num_bins = num_bins
+        self.num_states = 80
         self.num_actions = num_actions
         self.embedding_dim = embedding_dim
 
+        # Embedding layer for continuous input
+        self.embedding = nn.Linear(self.num_states, self.embedding_dim)
+
         transformer_layer = nn.TransformerEncoderLayer(
-            d_model=num_bins,
+            d_model=embedding_dim,
             nhead=num_heads,
             dim_feedforward=width,
             dropout=0.1,
@@ -24,7 +26,7 @@ class DeepQNetwork(nn.Module):
 
         self.transformer = nn.TransformerEncoder(transformer_layer, num_layers=num_enc_layers)
 
-        self.fc1 = nn.Linear(num_states * num_bins, width)
+        self.fc1 = nn.Linear(num_states * embedding_dim, width)
         self.norm1 = nn.BatchNorm1d(width)
 
         self.fc2 = nn.Linear(width, width)
@@ -47,8 +49,10 @@ class DeepQNetwork(nn.Module):
         self.eval()
         if state.dim() == 1:
             state = state.unsqueeze(0)
+        # Apply embedding layer
+        embedded_state = self.embedding(state)
 
-        x = self.transformer(state.float())
+        x = self.transformer(embedded_state)
         x = x.flatten(start_dim=1)
 
         x = torch.relu(self.norm1(self.fc1(x)))
@@ -58,6 +62,8 @@ class DeepQNetwork(nn.Module):
         q_values = self.fc5(x)
 
         return q_values
+
+
 
 
 class DQN:
@@ -80,7 +86,8 @@ class DQN:
             self.model.eval()
             print(f"Loaded {ts} Model Successfully...!")
     def act(self, state, epsilon):
-        if np.random.rand() <= epsilon:
+        # print(len(state), type(state))
+        if np.random.rand() <= epsilon or len(state) == 0:
             actions = np.random.randint(self.num_actions)
         else:
             # print(type(state[0]),type(state))
@@ -96,7 +103,7 @@ class DQN:
         self.model.optimizer.zero_grad()
         curr_state, actions, rewards, next_state = tuple(map(lambda x: torch.tensor(np.array(x)).to(self.model.device), experience))
         # print(torch.tensor(curr_state).shape)
-        curr_state, next_state = tuple(map(lambda x: torch.reshape(x,[self.batch_size,self.num_states, self.num_bins]), (curr_state, next_state)))
+        curr_state, next_state = tuple(map(lambda x: torch.reshape(x,[self.batch_size,self.num_states, 80]), (curr_state, next_state)))
         q_values = self.model.forward(curr_state)
         next_q_values = self.model.forward(next_state)
         q_target = rewards + self.gamma * torch.max(next_q_values, dim=1)[0].detach()
