@@ -1,6 +1,6 @@
 import sys
 from tqdm import tqdm
-sys.path.append('/content/drive/MyDrive/atsc-fyp-colab/')
+sys.path.append('/home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/')
 from sumo_rl import parallel_env
 import dqn, memory
 from utils.update_csv import update_csv
