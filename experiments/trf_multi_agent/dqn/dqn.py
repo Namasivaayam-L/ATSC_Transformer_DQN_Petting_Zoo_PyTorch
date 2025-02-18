@@ -1,3 +1,4 @@
+import os
 import torch 
 import torch.nn as nn
 import torch.optim as optim
@@ -50,11 +51,10 @@ class DeepQNetwork(nn.Module):
         if state.dim() == 1:
             state = state.unsqueeze(0)
         # Apply embedding layer
-        embedded_state = self.embedding(state)
+        x = self.embedding(state)
 
-        x = self.transformer(embedded_state)
+        x = self.transformer(x)
         x = x.flatten(start_dim=1)
-
         x = torch.relu(self.norm1(self.fc1(x)))
         x = torch.relu(self.norm2(self.fc2(x)))
         x = torch.relu(self.norm3(self.fc3(x)))
@@ -98,7 +98,7 @@ class DQN:
             # print(actions)
         return actions
 
-    def learn(self, experience):
+    def learn(self, key, ep, experience):
         self.model.train()
         self.model.optimizer.zero_grad()
         curr_state, actions, rewards, next_state = tuple(map(lambda x: torch.tensor(np.array(x)).to(self.model.device), experience))
@@ -111,6 +111,8 @@ class DQN:
         actions = actions.long()
         q_target_vec[np.arange(self.batch_size), actions] = q_target.float()
         loss = self.model.loss(q_target_vec, q_values).to(self.model.device)
+        with open(os.path.dirname(os.path.dirname(self.model_path))+'/csv/loss.csv', 'a+') as f:
+            f.write(f'{key},{ep},{str(loss.item())}\n')
         loss.backward() 
         self.model.optimizer.step()
         torch.save(self.model.state_dict(), self.model_path+f"{self.ts}.pth")

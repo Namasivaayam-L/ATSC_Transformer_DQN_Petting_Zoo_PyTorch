@@ -1,5 +1,5 @@
 State Updation:
-    ☐ Accumulated waiting time of each vehicle in the intersection and bin them in various bins and then send it as state.Divide the possible waiting time range into bins (e.g., 0-10 seconds, 10-20 seconds, etc.) and count the number of vehicles in each bin. This gives you a more detailed representation of the distribution. @started(24-12-31 18:42)
+    ✔ Accumulated waiting time of each vehicle in the intersection and bin them in various bins and then send it as state.Divide the possible waiting time range into bins (e.g., 0-10 seconds, 10-20 seconds, etc.) and count the number of vehicles in each bin. This gives you a more detailed representation of the distribution. @started(24-12-31 18:42) @done(25-01-12 00:06) @lasted(1w4d5h24m8s)
     
     ✘ accumulated waiting time of each vehicle right from the start (dropped) @cancelled(24-12-23 21:33)
 
@@ -7,7 +7,7 @@ Visualization:
     Graphs:
         ☐ Compare recorded values such as Accumulated waiting times, Travel Times, rewards obtained.
         ☐ Compare TRF-DQN with other approaches such as DQN, Fixed-time, Random-Time, atleast 4 methods
-        ☐ Add graphs for local and global lossess as well for the all the various approaches.
+        ☐ Add graphs for local and global lossess as well for the all the various approaches. @started(25-01-12 00:04)
         ☐ Once all the above are done, look for other suggested graphs in the journal updation docx.
     Tables:
         ☐ Add the avg and median values of all these algorithms to a table and add it as well. (refer your B1 paper, page 13)
@@ -53,7 +53,7 @@ High Level Plan:
             2.1 Ablation Study:
             ☐ This involves systematically removing or modifying parts of your model to see how it affects performance.
                 Remove Transformer Layer:
-                ☐ Train and evaluate a version of your model without the transformer layer (essentially a standard DQN with DeTr state extraction). Compare its performance to the full TRF-DQN. This will directly show the impact of the transformer.
+                ☐ Train and evaluate a version of your model without the transformer layer (essentially a standard DQN with DeTr state extraction). Compare its performance to the full TRF-DQN. This will directly show the impact of the transformer. @started(25-01-12 00:05)
                 Vary Transformer Parameters:
                 ☐ Experiment with different numbers of attention heads and encoder/decoder layers in the transformer. This will help you understand the influence of these hyperparameters on performance. For example, compare TRF-DQN with 1 head, 2 heads, 4 heads, etc.
                 Report Results:

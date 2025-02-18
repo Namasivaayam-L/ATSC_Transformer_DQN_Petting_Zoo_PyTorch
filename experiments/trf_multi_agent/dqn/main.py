@@ -60,7 +60,7 @@ def train(config):
             config['logging'].debug(f"Rewards: {rewards}")
             if all(terminations.values()):
                 for key in agents.keys():
-                    agents[key].learn(experience_replay.sample(config["batch_size"]))
+                    agents[key].learn(key,ep,experience_replay.sample(config["batch_size"]))
                 break
             for ts in env.possible_agents:
                 experience_replay.add(state[ts], actions[ts], rewards[ts], next_state[ts])
