@@ -38,32 +38,17 @@ class DefaultObservationFunction(ObservationFunction):
 
     def __call__(self) -> np.ndarray:
         observations = []
-        lane_wt = {lane: [self.ts.sumo.vehicle.getAccumulatedWaitingTime(veh) for veh in self.ts.sumo.lane.getLastStepVehicleIDs(lane)] for lane in self.ts.sumo.trafficlight.getControlledLanes(self.ts.id)}
-        all_waiting_times = [wt for wt in lane_wt.values()]
-        padded_state = []
-        # max_len = max(len(inner) for inner in all_waiting_times) if all_waiting_times else 0
-        for inner in all_waiting_times:
-            padded_inner = inner + [0] * (80 - len(inner))  # Pad with zeros
-            padded_state.append(padded_inner)
-        # print('Observations: ', padded_state)
-        return np.array(padded_state, dtype=np.float32)
-
-        # lane_wt = {lane: [self.ts.sumo.vehicle.getAccumulatedWaitingTime(veh) for veh in self.ts.sumo.lane.getLastStepVehicleIDs(lane)] for lane in self.ts.sumo.trafficlight.getControlledLanes(self.ts.id)}
-        # all_waiting_times = [wt for lane in lane_wt.values() for wt in lane] #Flatten the list
-        # min_wt = min(all_waiting_times) if all_waiting_times else 0
-        # """NOTE: Returns the accumulated waiting time [s] within the previous time interval of default length 100 s. (length is configurable per option --waiting-time-memory given to the main application)"""
-        # max_wt = max(all_waiting_times) if all_waiting_times else 100 # Default max if no data
-        # bin_edges = np.linspace(min_wt, max_wt, self.num_bins + 1)
-        # binned_data = create_waiting_time_bins(lane_wt, bin_edges)
-        # observation = np.array([binned_data[lane] for lane in binned_data])
-        # logging.debug(f'Observation: {observation}')
-        # return observation
+        """Return the default observation."""
+        phase_id = [1 if self.ts.green_phase == i else 0 for i in range(self.ts.num_green_phases)]  # one-hot encoding
+        min_green = [0 if self.ts.time_since_last_phase_change < self.ts.min_green + self.ts.yellow_time else 1]
+        density = self.ts.get_lanes_density()
+        queue = self.ts.get_lanes_queue()
+        observation = np.array(phase_id + min_green + density + queue, dtype=np.float32)
+        return observation
 
     def observation_space(self) -> spaces.Box:
         """Return the observation space."""
         return spaces.Box(
-            # low=np.zeros(self.ts.num_green_phases + 1 + 2 * len(self.ts.lanes), dtype=np.float32),
-            # high=np.ones(self.ts.num_green_phases + 1 + 2 * len(self.ts.lanes), dtype=np.float32),
-            low=np.zeros_like([0]*self.num_bins),
-            high=np.array([100]*self.num_bins)
+            low=np.zeros(self.ts.num_green_phases + 1 + 2 * len(self.ts.lanes), dtype=np.float32),
+            high=np.ones(self.ts.num_green_phases + 1 + 2 * len(self.ts.lanes), dtype=np.float32),
         )

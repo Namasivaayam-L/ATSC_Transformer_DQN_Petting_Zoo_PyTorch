@@ -1,3 +1,6 @@
+# python experiments/compare_plot.py system_mean_waiting_time outputs/all_veh_wt_obs/trf_dqn/2x2/#/emb_relu_bn/2000eps-p40/test/20ep/csv/19ep.csv outputs/all_veh_wt_obs/dqn/2x2/#/emb_relu_bn/2000eps-p40/test/20ep/csv/19ep.csv 
+#   outputs/fixed_time/2x2/2000eps-40/csv/1999ep.csv outputs/random_time/2x2/2000eps-40/csv/1999ep.csv
+
 import sys,os
 import pandas as pd
 import matplotlib.pyplot as plt

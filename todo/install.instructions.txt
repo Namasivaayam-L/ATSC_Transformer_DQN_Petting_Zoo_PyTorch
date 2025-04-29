@@ -2,3 +2,9 @@ tar -xvf sumo.tar.gz
 cd sumo
 makepkg -si
 sudo pacman -S texlive-basic texlive-latexextra texlive-fontsrecommended
+
+
+untar libxerces-c-3.2.tar.gz
+cd libxerces-c-3.2
+makepkg
+sudo pacman -U libxerces-c-3.2-3.2.5-1-x86_64.pkg.tar.zst

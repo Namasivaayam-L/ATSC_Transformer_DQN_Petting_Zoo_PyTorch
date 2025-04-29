@@ -1,4 +1,5 @@
 import os
+from venv import logger
 import torch 
 import torch.nn as nn
 import torch.optim as optim
@@ -111,7 +112,12 @@ class DQN:
         actions = actions.long()
         q_target_vec[np.arange(self.batch_size), actions] = q_target.float()
         loss = self.model.loss(q_target_vec, q_values).to(self.model.device)
-        with open(os.path.dirname(os.path.dirname(self.model_path))+'/csv/loss.csv', 'a+') as f:
+        print("Model Path:", self.model_path)
+        parent_dir = os.path.dirname(os.path.dirname(self.model_path))
+        print("Parent Directory:", parent_dir)
+        csv_file_path = os.path.join(parent_dir, 'csv/loss.csv')
+        print("CSV File Path:", csv_file_path)
+        with open(os.path.join(self.model_path,'loss.csv'), 'a+') as f:
             f.write(f'{key},{ep},{str(loss.item())}\n')
         loss.backward() 
         self.model.optimizer.step()

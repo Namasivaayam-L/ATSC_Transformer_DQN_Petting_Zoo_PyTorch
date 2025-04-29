@@ -6,6 +6,7 @@ import dqn, memory
 from utils.update_csv import update_csv
 from utils.setup_env import setup_env
 from utils.plot import plot_rewards, plot_results
+from experiments.trf_multi_agent.a2c.a2c import A2C
 
 config = setup_env()
 
@@ -24,29 +25,33 @@ def train(config):
 
     info = {"step": 0, "state": {}, "rewards": {}}
     agents = {
-        ts: dqn.DQN(
-            ts,
-            env.action_spaces[ts].n,
-            config["num_states"],
-            config["width"],
-            config["num_heads"],
-            config["num_enc_layers"],
-            config["embedding_dim"],
-            config["num_bins"],
-            config["batch_size"],
-            config["gamma"],
-            config["learning_rate"],
-            config['model_path'],
-            config['fine_tune_model_path'],
+        ts: (
+            dqn.DQN(
+                ts,
+                env.action_spaces[ts].n,
+                config["num_states"],
+                config["width"],
+                config["num_heads"],
+                config["num_enc_layers"],
+                config["embedding_dim"],
+                config["num_bins"],
+                config["batch_size"],
+                config["gamma"],
+                config["learning_rate"],
+                config['model_path'],
+                config['fine_tune_model_path'],
+            )
         )
         for ts in env.possible_agents
     }
-
+    config['logging'].info(f"action: {env.action_spaces['1'].n}")
+    config['logging'].info(f"state: {env.observation_spaces['1'].n}")
     experience_replay = memory.Memory(config["buffer_size"])
     for ep in tqdm(range(0, config["num_episodes"]), desc="Running..", unit="epsiode"):
         config['logging'].info(f"Episode: {ep}")
         config['logging'].info(f"Epsilon: {config['epsilon']}")
         state, _ = env.reset()
+        config['logging'].debug(f"State: {len(state)}{len(state[0])}")
         terminations = {a: False for a in agents}
         epsilon = max(config["epsilon"] * config["decay"]**ep, config["min_epsilon"]) #update epsilon every episode
 
