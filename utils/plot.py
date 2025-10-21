@@ -6,18 +6,20 @@ import os
 import glob
 from itertools import cycle
 import os
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import logging
 
+mpl.rcParams.update(mpl.rcParamsDefault)
 
 sns.set(
     style="darkgrid",
     rc={
         "figure.figsize": (7.2, 4.45),
-        "text.usetex": True,
+        "text.usetex": False,
         "xtick.labelsize": 16,
         "ytick.labelsize": 16,
         "font.size": 15,
@@ -59,7 +61,6 @@ def plot_df(df, color, axis, xaxis, yaxis, ma=1, label=""):
 def plot_results(files, legends=None, xaxis="step", ma=1, sep=",", xlabel="Time step (ms)"):
     labels = cycle(legends) if legends is not None else cycle([str(i) for i in range(len(files))])
     save_path = os.path.dirname(os.path.dirname(files[0]))
-    print(f'{save_path}/plots/')
     os.makedirs(f'{save_path}/plots/',exist_ok=True)
     
     # File reading and grouping    
@@ -82,15 +83,15 @@ def plot_results(files, legends=None, xaxis="step", ma=1, sep=",", xlabel="Time 
             axs.set_xlabel(xlabel)
             axs.set_ylim(bottom=0)
             try:
-                plt.savefig(f'{save_path}/plots/{yax}_1.png')
-                logging.info(f"Saved plot to {save_path}/plots/{yax}.png")
+                plt.savefig(f'{save_path}/plots/{yax}_{os.path.basename(file).split(".")[0]}.png')
+                logging.info(f"Saved plot to {save_path}/plots/{yax}_{os.path.basename(file).split(".")[0]}.png")
             except Exception as e:
-                logging.error(f"Error saving plot: {e}")
+                logging.error(f"Error saving plot for ep {os.path.basename(file)}: {e}")
             plt.clf()  # Clear the current figure to avoid overlapping plots
             plt.close(fig) 
 
 
-def plot_rewards(csv_file_path):
+def plot_rewards(csv_file_path, ts_signals):
     """Plots and saves reward data from a CSV file.
 
     Args:
@@ -103,11 +104,11 @@ def plot_rewards(csv_file_path):
 
     data = pd.read_csv(csv_file_path)
     print(data.head(5))
-    data = data.groupby('ep')[['1', '2', '5', '6']].mean().reset_index()
-    data.columns = ['ep', '1', '2', '5', '6']
+    data = data.groupby('ep')[ts_signals].mean().reset_index()
+    data.columns = ['ep'] + ts_signals
 
     ep_col = data['ep']
-    reward_cols = data[['1', '2', '5', '6']].mean(axis=1)
+    reward_cols = data[ts_signals].mean(axis=1)
 
     plt.figure(figsize=(10, 6))
     plt.plot(ep_col, reward_cols)
@@ -116,9 +117,33 @@ def plot_rewards(csv_file_path):
     plt.ylabel('Rewards')
     plt.savefig(plot_save_path)
     plt.close()
-    
+
+def plot_losses(csv_file_path, ts_signals):
+    """Plots and saves loss data from a CSV file."""
+    file_dir = os.path.dirname(csv_file_path)
+    plot_dir = os.path.join(file_dir, 'plots')
+    os.makedirs(plot_dir, exist_ok=True)
+    plot_save_path = os.path.join(plot_dir, 'losses.png')
+
+    data = pd.read_csv(csv_file_path)
+    ep_col = data['ep']
+    plt.figure(figsize=(10, 6))
+    # plot global loss
+    if 'global' in data.columns:
+        plt.plot(ep_col, data['global'], label='global')
+    # plot local per-agent losses
+    for ts in ts_signals:
+        if ts in data.columns:
+            plt.plot(ep_col, data[ts], label=f'loss_{ts}')
+    plt.title('DQN-TRF Agent Loss')
+    plt.xlabel('Episodes')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.savefig(plot_save_path)
+    plt.close()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", required=True, help="Path to the CSV file")
     args = parser.parse_args()
-    plot_rewards(args.file)
+    plot_rewards(args.file, ['1'])

@@ -7,6 +7,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 import math
+import logging
 from pathlib import Path
 
 from memory import Memory
@@ -42,13 +43,13 @@ class NoisyLinear(nn.Module):
         x = torch.randn(size, device=self.weight_mu.device)
         return x.sign().mul_(x.abs().sqrt_())
 
-    def forward(self, input):
+    def forward(self, x):
         if self.training:
             w = self.weight_mu + self.weight_sigma * self.weight_epsilon
             b = self.bias_mu + self.bias_sigma * self.bias_epsilon
         else:
             w, b = self.weight_mu, self.bias_mu
-        return F.linear(input, w, b)
+        return F.linear(x, w, b)
 
 # Core Q-network
 class DeepQNetwork(nn.Module):
@@ -91,6 +92,7 @@ class DoubleDQN:
                  batch_size, gamma, learning_rate,
                  buffer_size, n_step, target_update_freq=1000,
                  alpha=0.6, beta=0.4, beta_increment_per_sampling=1e-3):
+        self.logger = logging.getLogger(__name__)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = DeepQNetwork(num_states, num_bins, num_actions,
                                   embedding_dim, num_heads,
@@ -145,6 +147,12 @@ class DoubleDQN:
         # update priorities and target network
         new_prios = loss_per.abs().cpu().numpy()
         self.memory.update_priorities(indices, new_prios)
+    def save(self, path):
+        """Save model state to file."""
+        Path(path).mkdir(parents=True, exist_ok=True)
+        torch.save(self.model.state_dict(), str(Path(path) / f"{self.ts}.pth"))
+        self.logger.info(f"Model saved to {path}/{self.ts}.pth")
+
         self.learn_step_counter += 1
         if self.learn_step_counter % self.target_update_freq == 0:
             self.target_model.load_state_dict(self.model.state_dict())

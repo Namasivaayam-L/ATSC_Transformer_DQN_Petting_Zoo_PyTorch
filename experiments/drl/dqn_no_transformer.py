@@ -13,42 +13,44 @@ logger = logging.getLogger(__name__)
 
 # NoisyNet linear layer for learned exploration
 class NoisyLinear(nn.Module):
-    def __init__(self, in_features, out_features, sigma_init=0.017):
+    def __init__(self, in_features: int, out_features: int, sigma_init: float = 0.017) -> None:
         super().__init__()
-        self.in_features, self.out_features = in_features, out_features
-        self.weight_mu = nn.Parameter(torch.empty(out_features, in_features))
-        self.weight_sigma = nn.Parameter(torch.empty(out_features, in_features))
+        self.in_features: int = in_features
+        self.out_features: int = out_features
+        self.weight_mu: nn.Parameter = nn.Parameter(torch.empty(out_features, in_features))
+        self.weight_sigma: nn.Parameter = nn.Parameter(torch.empty(out_features, in_features))
         self.register_buffer('weight_epsilon', torch.empty(out_features, in_features))
-        self.bias_mu = nn.Parameter(torch.empty(out_features))
-        self.bias_sigma = nn.Parameter(torch.empty(out_features))
+        self.bias_mu: nn.Parameter = nn.Parameter(torch.empty(out_features))
+        self.bias_sigma: nn.Parameter = nn.Parameter(torch.empty(out_features))
         self.register_buffer('bias_epsilon', torch.empty(out_features))
         self.reset_parameters(sigma_init)
         self.reset_noise()
 
-    def reset_parameters(self, sigma_init):
+    def reset_parameters(self, sigma_init: float) -> None:
         mu_range = 1 / math.sqrt(self.in_features)
         self.weight_mu.data.uniform_(-mu_range, mu_range)
         self.bias_mu.data.uniform_(-mu_range, mu_range)
         self.weight_sigma.data.fill_(sigma_init)
         self.bias_sigma.data.fill_(sigma_init)
 
-    def reset_noise(self):
+    def reset_noise(self) -> None:
         eps_in = self._scale_noise(self.in_features)
         eps_out = self._scale_noise(self.out_features)
         self.weight_epsilon.copy_(eps_out.ger(eps_in))
         self.bias_epsilon.copy_(eps_out)
 
-    def _scale_noise(self, size):
+    def _scale_noise(self, size: int) -> torch.Tensor:
         x = torch.randn(size, device=self.weight_mu.device)
         return x.sign().mul_(x.abs().sqrt_())
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         if self.training:
             w = self.weight_mu + self.weight_sigma * self.weight_epsilon
             b = self.bias_mu + self.bias_sigma * self.bias_epsilon
         else:
             w, b = self.weight_mu, self.bias_mu
         return F.linear(input, w, b)
+
 
 class DeepQNetwork(nn.Module):
     def __init__(self, num_states, num_actions, embedding_dim, num_heads, num_enc_layers, width, learning_rate):
@@ -65,17 +67,7 @@ class DeepQNetwork(nn.Module):
         # Embed each scalar feature to embedding_dim
         self.embedding = nn.Linear(1, self.embedding_dim)
 
-        transformer_layer = nn.TransformerEncoderLayer(
-            d_model=self.embedding_dim,
-            nhead=self.num_heads,
-            dim_feedforward=self.width,
-            dropout=0.1,
-            activation='gelu',
-            batch_first=True,
-            norm_first=True
-        )
-
-        self.transformer = nn.TransformerEncoder(transformer_layer, num_layers=self.num_enc_layers)
+        # Removed transformer layers
 
         self.fc1 = NoisyLinear(num_states * embedding_dim, width)
         self.norm1 = nn.LayerNorm(width)
@@ -105,17 +97,14 @@ class DeepQNetwork(nn.Module):
             if isinstance(module, NoisyLinear):
                 module.reset_noise()
 
-    def forward(self, state):
-        logger.info(f"DeepQNetwork forward | input shape={state.shape}")
+    def forward(self, state: torch.Tensor) -> torch.Tensor:
+        logger.debug(f"DeepQNetwork forward | input shape={state.shape}")
         if state.dim() == 1:
             state = state.unsqueeze(0)
         # add feature dimension for embedding
         state = state.unsqueeze(-1)  # [batch, num_states, 1]
         # Apply embedding layer
-        logger.info(f"DeepQNetwork forward state value | embedding shape={state.shape}")
         x = self.embedding(state)
-        logger.info(f"DeepQNetwork forward embedding value | embedding shape={x.shape}")
-        x = self.transformer(x)
         x = x.flatten(start_dim=1)
         x = torch.relu(self.norm1(self.fc1(x)))
         x = torch.relu(self.norm2(self.fc2(x)))

@@ -1,39 +1,47 @@
-import sys, os
+import sys, os, random as rd
+from pettingzoo.utils import env
 from tqdm import tqdm
+import pandas as pd  # for loss logging
 sys.path.append('/home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/')
 from sumo_rl import parallel_env
-import dqn, memory
+import dqn as dqn, memory
 from utils.update_csv import update_csv
 from utils.setup_env import setup_env
-from utils.plot import plot_rewards, plot_results
+from utils.plot import plot_rewards, plot_results, plot_losses
 
 config = setup_env()
+ts_signals = None
 
 def train(config):
     env = parallel_env(
         net_file=config["net_file"],
         route_file=config["route_file"],
+        num_seconds=config["num_seconds"],
         out_csv_name=config["csv_path"],
         use_gui=config["use_gui"],
-        num_seconds=config["num_seconds"],
         yellow_time=config["yellow_time"],
         min_green=config["min_green"],
         max_green=config["max_green"],
         reward_fn=config["reward_fn"],
     )
-
-    info = {"step": 0, "state": {}, "rewards": {}}
+    info = {"step": 0, "state": {}, "rewards": {}, "loss": {}}
+    global ts_signals
+    ts_signals = env.possible_agents
+    
+    config['logging'].info(f"Traffic signals: {env.possible_agents}")
+    config['logging'].info(f"Action: {env.action_space(env.possible_agents[0]).n}")
+    config['logging'].info(f"Observation: {env.observation_space(env.possible_agents[0]).shape[0]}")
+    
     agents = {
         ts: (
             dqn.DQN(
                 ts,
-                env.action_spaces[ts].n,
-                env.observation_spaces[ts].n,
+                env.action_space(ts).n,
+                env.observation_space(ts).shape[0],
                 config["width"],
                 config["num_heads"],
                 config["num_enc_layers"],
                 config["embedding_dim"],
-                config["num_bins"],
                 config["batch_size"],
                 config["gamma"],
                 config["learning_rate"],
@@ -44,14 +52,13 @@ def train(config):
         )
         for ts in env.possible_agents
     }
-    config['logging'].info(f"action: {env.action_spaces['1'].n}")
-    config['logging'].info(f"state: {env.observation_spaces['1'].n}")
-    experience_replay = memory.Memory(config["buffer_size"])
+    # create separate replay buffer per agent
+    experience_replay = {ts: memory.Memory(config["buffer_size"]) for ts in env.possible_agents}
     for ep in tqdm(range(0, config["num_episodes"]), desc="Running..", unit="epsiode"):
         config['logging'].info(f"Episode: {ep}")
         config['logging'].info(f"Epsilon: {config['epsilon']}")
         state, _ = env.reset()
-        config['logging'].debug(f"State: {len(state)}{len(state[0])}")
+        # config['logging'].debug(f"State: {state.shape}")
         terminations = {a: False for a in agents}
         epsilon = max(config["epsilon"] * config["decay"]**ep, config["min_epsilon"]) #update epsilon every episode
 
@@ -64,23 +71,41 @@ def train(config):
             info["rewards"].update(rewards)
             config['logging'].debug(f"Rewards: {rewards}")
             if all(terminations.values()):
-                # prioritized replay: sample once and update priorities per agent
-                experience = experience_replay.sample(config["batch_size"])
-                for key, agent in agents.items():
-                    indices, new_prios = agent.learn(key, ep, experience)
-                    experience_replay.update_priorities(indices, new_prios)
+                # per-agent prioritized replay with loss tracking
+                losses = []
+                for ts, agent in agents.items():
+                    exp = experience_replay[ts].sample(config["batch_size"])
+                    indices, new_prios, loss_val = agent.learn(ts, ep, exp)
+                    experience_replay[ts].update_priorities(indices, new_prios)
+                    info["loss"][ts] = loss_val
+                    losses.append(loss_val)
+                # compute global loss average
+                info["loss"]["global"] = sum(losses) / len(losses) if losses else 0.0
                 break
             for ts in env.possible_agents:
-                experience_replay.add(state[ts], actions[ts], rewards[ts], next_state[ts])
+                experience_replay[ts].add(state[ts], actions[ts], rewards[ts], next_state[ts])
             config['logging'].debug(f"Added to experience replay")
             state = next_state
-            update_csv(info, ep, config['output_path'])
+            update_csv(info, ep, env.possible_agents, config['output_path'])
             info["step"] += 1
             tqdm.write(f"Progress: {info['step']}/{config['num_seconds']}", end="\r")
         config['logging'].info(f"Episode {ep} finished")
         env.save_csv(config['csv_path'], ep)
+        # write loss CSV per episode
+        loss_df = pd.DataFrame([info["loss"]])
+        loss_df["ep"] = ep
+        mode = "w" if ep == 0 else "a"
+        loss_df.to_csv(config["output_path"] + "loss.csv", index=False, mode=mode, header=(mode == "w"))
     env.close()
+    
 train(config)
+
+plot_rewards(config['output_path']+'rewards.csv', ts_signals)
+plot_losses(config['output_path']+'loss.csv', ts_signals)
+num_eps = int(config["num_episodes"])
+ep = rd.randint(int(num_eps*0.75), num_eps-1)
+print(f'{config["csv_path"]}{ep}ep.csv')
+plot_results([f'{config["output_path"]}csv/{ep}ep.csv'])
 
 config["fine_tune"] = True
 config["num_episodes"] =  config["test_num_episodes"]
@@ -89,9 +114,13 @@ config["output_path"] = f'{config["output_path"]}test/{config["test_num_episodes
 config['csv_path'] = f'{config["output_path"]}csv/'
 
 os.makedirs(config["csv_path"], exist_ok=True)
-os.makedirs(config["output_path"], exist_ok=True)
+os.makedirs(config["output_path"], exist_ok=True) 
+
 train(config)
 
-plot_rewards(config['output_path']+'rewards.csv')
-print(f'{config["csv_path"]}{config["test_num_episodes"]-1}ep.csv')
-plot_results([f'{config["output_path"]}csv/{int(config["test_num_episodes"])-1}ep.csv'])
+plot_rewards(config['output_path']+'rewards.csv', ts_signals)
+plot_losses(config['output_path']+'loss.csv', ts_signals)
+test_num_eps = int(config["num_episodes"])
+test_ep = rd.randint(int(test_num_eps*0.75), test_num_eps-1)
+print(f'{config["csv_path"]}{test_ep}ep.csv')
+plot_results([f'{config["output_path"]}csv/{test_ep}ep.csv'])

@@ -1,6 +1,5 @@
 State Updation:
     ✔ Accumulated waiting time of each vehicle in the intersection and bin them in various bins and then send it as state.Divide the possible waiting time range into bins (e.g., 0-10 seconds, 10-20 seconds, etc.) and count the number of vehicles in each bin. This gives you a more detailed representation of the distribution. @started(24-12-31 18:42) @done(25-01-12 00:06) @lasted(1w4d5h24m8s)
-    
     ✘ accumulated waiting time of each vehicle right from the start (dropped) @cancelled(24-12-23 21:33)
 
 Visualization:
