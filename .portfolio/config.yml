@@ -1,0 +1,30 @@
+# .portfolio/config.yml
+name: ATSC Transformer DQN with PettingZoo
+slug: atsc-transformer-dqn-petting-zoo-pytorch
+description: >
+  Reinforcement Learning environments and learning code for traffic signal control in SUMO.
+  Implements Transformer-based DQN algorithms for adaptive traffic signal control using PettingZoo multi-agent environments.
+tech_stack:
+  - PyTorch
+  - PettingZoo
+  - SUMO
+  - Reinforcement Learning
+  - DQN
+  - Transformer
+  - Python
+  - NumPy
+  - Pandas
+  - Gymnasium
+tags:
+  - AI/ML
+  - Reinforcement Learning
+  - Traffic Control
+  - Multi-Agent Systems
+  - Simulation
+is_active: true
+readme_path: README.md
+repo_url: https://github.com/Namasivaayam-L/ATSC_Transformer_DQN_Petting_Zoo_PyTorch
+thumbnail: https://raw.githubusercontent.com/Namasivaayam-L/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/main/.portfolio/cover.png
+created_at: 2025-11-27
+updated_at: 2025-11-27
+featured: false
