@@ -1,49 +1,74 @@
-# ATSC Transformer DQN with PettingZoo
+# 🚦 ATSC Transformer DQN with PettingZoo
 
-## Overview
-Reinforcement Learning environments and learning code for traffic signal control in SUMO. Implements Transformer-based DQN algorithms for adaptive traffic signal control using PettingZoo multi-agent environments.
+A research framework for **Adaptive Traffic Signal Control (ATSC)** using **Transformer-based Deep Q-Networks (DQN)** within **PettingZoo** multi-agent environments. Integrates with **SUMO** for realistic traffic simulation.
 
-## Features
-- Multi-agent reinforcement learning for traffic signal control
-- Transformer-based DQN algorithms
-- Integration with SUMO traffic simulator
-- PettingZoo environment compatibility
-- Traffic optimization using deep Q-networks
+---
 
-## Tech Stack
-- PyTorch
-- PettingZoo
-- SUMO
-- Reinforcement Learning
-- DQN
-- Transformer
-- Python
-- NumPy
-- Pandas
-- Gymnasium
+## 🚀 Features
 
-## Architecture
-The project implements adaptive traffic signal control using:
-- Multi-agent DQN with Transformer attention mechanisms
-- SUMO-based traffic simulation environments
-- PettingZoo multi-agent RL framework integration
+- ✅ Multi-agent Reinforcement Learning for ATSC
+- ✅ Transformer-based DQN for optimal signal control
+- ✅ Seamless integration with SUMO traffic simulator
+- ✅ PettingZoo compatibility for scalable multi-agent environments
+- ✅ Focus on traffic optimization and flow management
 
-## Setup
+---
+
+## 🧰 Tech Stack
+
+| Component            | Tech                                   |
+|----------------------|----------------------------------------|
+| RL Framework         | PettingZoo                             |
+| Deep Learning        | PyTorch                                |
+| Simulation           | SUMO                                   |
+| Algorithms           | DQN, Transformer                       |
+| Language             | Python                                 |
+| Data Handling        | NumPy, Pandas                          |
+| Environment Inter.   | Gymnasium                              |
+
+---
+
+## 🛠️ Setup Instructions
+
+To get started, clone the repository and install the dependencies:
+
 ```bash
+git clone https://github.com/Namasivaayam-L/ATSC_Transformer_DQN_Petting_Zoo_PyTorch.git
+cd ATSC_Transformer_DQN_Petting_Zoo_PyTorch
 pip install -r requirements.txt
 ```
 
-## Usage
-The experiments directory contains various implementations:
-- Transformer-based DQN (trf_dqn)
-- Multi-agent DQN (trf_multi_agent)
-- SAC (Soft Actor-Critic) implementations
+### 🔧 SUMO
 
-## Applications
-- Traffic signal optimization
-- Urban traffic management
-- Multi-agent reinforcement learning research
-- Traffic flow optimization
+Ensure SUMO is properly installed and configured on your system for traffic simulations.
 
-## Tags
-AI/ML, Reinforcement Learning, Traffic Control, Multi-Agent Systems, Simulation
+---
+
+## 🧑‍💻 Run Experiments
+
+The `experiments/` directory contains various implementations:
+
+-   **Transformer-based DQN**: `experiments/trf_dqn/`
+-   **Multi-agent DQN**: `experiments/trf_multi_agent/`
+-   **SAC Implementations**: Explore `experiments/` for Soft Actor-Critic examples.
+
+---
+
+## 📂 Project Structure
+
+```
+.
+├── experiments/                  # Contains various experiment implementations (trf_dqn, trf_multi_agent, SAC)
+├── sumo_rl/                      # Core PettingZoo environment wrappers for SUMO
+│   ├── agents/                   # Agent implementations
+│   ├── environment/              # SUMO-PettingZoo environment setup
+│   └── util/                     # Utility functions for RL environments
+├── utils/                        # General utilities (plotting, config reading)
+├── README.md                     # Project overview and documentation
+├── pyproject.toml                # Project metadata and dependencies
+└── requirements.txt              # Python dependencies
+```
+
+---
+
+Built for research in **AI/ML**, **Reinforcement Learning**, **Traffic Control**, and **Multi-Agent Systems**.
