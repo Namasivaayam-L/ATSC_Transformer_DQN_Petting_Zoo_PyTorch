@@ -1,0 +1,45 @@
+# Top-level Hydra config — Traffic Sense (Simulation Track)
+# Phase 0 acceptance gate: fixed-time controller runs end-to-end on grid4x4.
+#
+# Usage:
+#   uv run python -m eval.evaluate env=grid4x4 agent=fixed_time seeds=5
+#   uv run python train.py env=grid4x4 agent=idqn reward=dwt seed=0
+#
+# Every constant lives here. Nothing is hardcoded in .py.
+
+defaults:
+  - env: grid4x4
+  - agent: fixed_time
+  - reward: dwt
+  - _self_
+
+seed: 0
+seeds: 5                       # for the aggregate/eval sweep
+run_dir: ${oc.env:RUN_DIR,outputs/${now:%Y-%m-%d_%H-%M-%S}}
+tracker: tensorboard            # 'tensorboard' (default, offline) | 'wandb'
+wandb_project: traffic-sense-journal
+
+# SUMO / sim
+sumo_home: /usr/share/sumo
+num_seconds: 800                # one episode length; gate is faster with 800s than 3600s
+begin_time: 0
+delta_time: 5
+yellow_time: 2
+min_green: 5
+max_green: 60
+single_agent: false            # grid4x4 = 16 agents, cologne3 = 3
+
+# Training (Phase 1+)
+num_episodes: 50                # overridden per-phase
+learning_starts: 1000
+train_freq: 4                   # gradient updates every N env steps (bug #1 fix)
+batch_size: 64
+gamma: 0.99
+learning_rate: 1.0e-4
+buffer_size: 50000
+target_update_interval: 1000    # hard update of target net (bug #3 fix)
+tau: null                       # if set, uses Polyak averaging instead of hard update
+dueling: false                  # optional Dueling head (Phase 1 stretch)
+
+# Eval (Phase 0 gate)
+eval_episodes: 1                # one episode per seed; aggregated across seeds

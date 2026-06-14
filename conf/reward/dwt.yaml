@@ -1,0 +1,6 @@
+# Difference in waiting time (the original paper's default). Per-agent sum of
+# change in cumulative waiting time vs the previous step. Implemented inside
+# the SUMO env (see sumo_rl/environment/obs_funcs.py and the env wrappers).
+
+name: dwt
+fn: "dwt"

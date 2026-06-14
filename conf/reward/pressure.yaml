@@ -1,0 +1,4 @@
+# Pressure-based reward (negative pressure = good). Standard RESCO baseline.
+
+name: pressure
+fn: "pressure"

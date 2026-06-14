@@ -1,0 +1,9 @@
+# Fixed-time cyclic controller. The Phase 0 acceptance gate runs on this.
+# No learning, no parameters beyond phase cycling.
+
+name: fixed_time
+type: rule_based
+
+# Phase cycling
+cycle_seconds: 30              # one full rotation of green phases
+all_red: 0

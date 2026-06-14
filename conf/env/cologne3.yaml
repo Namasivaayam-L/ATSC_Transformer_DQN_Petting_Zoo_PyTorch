@@ -1,0 +1,11 @@
+# RESCO cologne3 — 3 traffic-signal agents, real Cologne topology.
+# Slower than grid4x4; reserved for Phase 3 scenario sweep.
+
+scenario: cologne3
+net_file: null
+route_file: null
+additional_sumo_cmd: null
+use_gui: false
+
+num_episodes: 30
+num_seconds: 3600

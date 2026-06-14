@@ -1,0 +1,12 @@
+# Temporal history-attention transformer (Phase 2 fallback if spatial fails GATE B).
+
+name: trf_temporal
+type: learned
+
+network:
+  type: transformer
+  num_heads: 4
+  num_enc_layers: 2
+  embedding_dim: 64
+  history_len: 16               # last K timesteps of own observation
+  dueling: ${dueling}

@@ -1,0 +1,12 @@
+# RESCO grid4x4 — 16 traffic-signal agents.
+# Scenarios are bundled with the SUMO-RL fork at sumo_rl/environment/resco_envs.py.
+
+scenario: grid4x4
+net_file: null                 # resolved by env name in eval/evaluate.py via RESCO mapping
+route_file: null
+additional_sumo_cmd: null      # e.g. "--lanechange.car-following.krauss"
+use_gui: false
+
+# Per-episode cap; grid4x4 is fast
+num_episodes: 50
+num_seconds: 3600

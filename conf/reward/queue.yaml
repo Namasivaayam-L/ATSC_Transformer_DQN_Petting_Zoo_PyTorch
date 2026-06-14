@@ -1,0 +1,4 @@
+# Queue-based reward (negative queue length = good). Per-agent queue length.
+
+name: queue
+fn: "queue"

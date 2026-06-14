@@ -1,6 +1,9 @@
 outputs
 nets
 pt
+tb/
+aggregate.json
+seed_*/
 sumo_rl.egg-info/
 __pycache__
 .venv

@@ -1,0 +1,14 @@
+# Spatial coordination transformer (Phase 2). Built in Phase 2; placeholder
+# here so the config tree is complete and Phase 3 can reference it.
+
+name: trf_coord
+type: learned
+
+network:
+  type: transformer
+  num_heads: 4
+  num_enc_layers: 2
+  embedding_dim: 64
+  neighbour_radius: 1          # 1-hop vs 2-hop ablation
+  include_neighbour_action: true   # variant (a) obs only vs (b) obs+action
+  dueling: ${dueling}
