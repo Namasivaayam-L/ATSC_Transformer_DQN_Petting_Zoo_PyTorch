@@ -27,10 +27,10 @@ the chronological history of what was done and by whom (which session).
 | Phase | Name | Weeks | Gate | Status |
 |-------|------|-------|------|--------|
 | 0 | Foundation & Rigor Scaffolding | 0–1 | Fixed-time e2e on grid4x4, 5 seeds, W&B | 🟢 **PASSED** — fixed-time runs end-to-end, all metrics logged |
-| 1 | RL Core (CleanRL IDQN) | 1–2 | **GATE A**: IDQN beats Fixed-time | 🟢 **IMPLEMENTED & VERIFIED** — `agents/idqn.py` + `train.py` working, loss decreasing. Full 5-seed run needed for formal GATE A. |
-| 2 | Spatial Coordination Transformer | 3–4 | **GATE B**: trf_coord ≥ IDQN | 🟢 **IMPLEMENTED & VERIFIED** — `agents/trf_coord.py` + `env/road_graph.py` working, loss decreasing over 2 episodes. Full 5-seed run needed for formal GATE B. |
-| 3 | Baselines & Ablations | 5–6 | Full results table + equal-param ablation | 🔴 Not Started |
-| 4 | Statistical Validation & Figures | 7 | All figures from `make_figures.py` | 🔴 Not Started |
+| 1 | RL Core (CleanRL IDQN) | 1–2 | **GATE A**: IDQN beats Fixed-time | 🟡 **IMPLEMENTED** — `agents/idqn.py` + `train.py` working, loss decreasing. GATE A running (109+ eps). |
+| 2 | Spatial Coordination Transformer | 3–4 | **GATE B**: trf_coord ≥ IDQN | 🟡 **IMPLEMENTED** — `agents/trf_coord.py` + `env/road_graph.py` working, loss decreasing. GATE B running (32+ eps). |
+| 3 | Baselines & Ablations | 5–6 | Full results table + equal-param ablation | 🟡 **IN PROGRESS** — baselines done (max_pressure, mplight), equal-param ablation config ready, experiment matrix runner done |
+| 4 | Statistical Validation & Figures | 7 | All figures from `make_figures.py` | 🟡 **PARTIAL** — make_figures.py skeleton created, needs data from Phase 3 |
 | 5 | Write-up Integration | 8 | Manuscript with real numbers | 🔴 Not Started |
 
 ## Key backlog items (parallel track)
@@ -45,3 +45,12 @@ the chronological history of what was done and by whom (which session).
 - Planning session: 2026-06-13
 - Execution start: 2026-06-13 (initial code work done same day)
 - Phase 0 + 1 + 2 coded: 2026-06-14
+- Phase 3 baselines coded: 2026-06-15
+- GATE A/B running: 2026-06-15
+
+## Current Training Status (2026-06-15 08:20 IST)
+- **GATE A (IDQN)**: 109+ episodes, process 33695, ~170% CPU, 2.7GB RAM
+- **GATE B (trf_coord)**: 32+ episodes, process 36670, ~370% CPU, 2.8GB RAM
+- Both using 800 sim-seconds per episode (160 steps, ~12s/ep)
+- ETA: ~3.3h total for 200 eps × 5 seeds
+- Logs: `logs/gate_a_idqn.log`, `logs/gate_b_trf.log`

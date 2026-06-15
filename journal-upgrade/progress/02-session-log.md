@@ -202,3 +202,87 @@ Each session appends an entry here. This is the authoritative record of what hap
 2. **Run GATE B**: `nohup python train.py agent=trf_coord env=grid4x4 reward=dwt seeds=5 num_episodes=200 num_seconds=800 &`
 3. **Begin Phase 3**: Implement Max-Pressure and MPLight baselines
 4. **Resolve backlog items**: Journal shortlist, authorship, compute budget
+
+---
+
+## Session #4 — 2026-06-15
+
+**Agent:** Current session (opencode/mimo-v2-free)
+**Duration:** ~1 hour
+**Branch:** `journal-upgrade-phases-0-2`
+
+### What was done
+
+1. **Fixed RESCO num_seconds bug** (commit `744d9c1`):
+   - All 7 RESCO factories in `resco_envs.py` had `kwargs.update({"num_seconds": 3600})` that overwrote caller's value
+   - Changed to `kwargs.setdefault("num_seconds", N)` so Hydra config values take precedence
+   - Episodes now correctly run `num_seconds` instead of always 3600
+
+2. **Added flush=True to train.py** (commit `d34f08c`):
+   - All key print statements now flush output for real-time monitoring
+
+3. **Launched GATE A & GATE B** in background:
+   - GATE A (IDQN): process 33695, `logs/gate_a_idqn.log`, 109+ eps at time of writing
+   - GATE B (trf_coord): process 36670, `logs/gate_b_trf.log`, 32+ eps at time of writing
+
+4. **Implemented Phase 3 baselines** (commit `61fff8a`):
+   - `baselines/max_pressure.py`: Max-Pressure controller (Varaiya 2013)
+     - Selects phase with highest total waiting time on green lanes
+     - Pure observation-based, no SUMO API calls
+     - Tested end-to-end on grid4x4 — working
+   - `baselines/mplight.py`: MPLight pressure controller (Wei et al. KDD 2019)
+     - Simplified pressure-based phase selection
+     - Fixed TraCI connection error by computing pressure from observation directly
+     - Tested end-to-end on grid4x4 — working
+   - `conf/agent/max_pressure.yaml`, `conf/agent/mplight.yaml`: Hydra configs
+   - `train.py` updated: imports, `_create_agents`, `_select_action`, training loop
+     - `_RL_AGENTS = (IDQNAgent, TrfCoordAgent)` — training loop conditionally calls learn/buffer
+     - Baselines skip learn/buffer, access SUMO via traffic signal object
+
+5. **Created experiment matrix runner** (commit `2aca295`):
+   - `experiments/run_matrix.py`: orchestrates methods × scenarios × rewards × seeds
+   - Supports dry-run mode, timeout handling, per-run logging
+   - Full matrix: 5 methods × 2 envs × 3 rewards × 5 seeds = 150 runs
+
+6. **Created equal-parameter ablation config** (commit `706830a`):
+   - `conf/agent/trf_coord_equal.yaml`: embedding_dim=72, 2 heads, 1 layer
+   - 138,392 params (0.98× IDQN's 140,552) — near-perfect match
+   - `train.py` updated to support trf_coord_equal via startswith check
+
+7. **Created make_figures.py** (commit `8ce3b8b`):
+   - `figures/make_figures.py`: regenerates all figures/tables from logged data
+   - Supports: learning curves, attention heatmap, IQM profiles, results table
+   - Skeleton created, needs data from Phase 3 runs
+
+8. **Updated progress files** to reflect current state
+
+### Key decisions
+- **RESCO num_seconds via `setdefault`**: Factory functions were overwriting caller's `num_seconds` with hardcoded 3600
+- **Baseline agents skip learn/buffer**: `_RL_AGENTS = (IDQNAgent, TrfCoordAgent)` — training loop conditionally calls `_store_transition` and `learn()`
+- **MPLight simplified**: Original design accessed SUMO API directly, causing TraCI connection errors. Rewrote to compute pressure from observation vector only.
+- **Equal-param ablation**: e=72, h=2, l=1 gives 138k params vs IDQN's 140k — near-perfect match for the spine ablation
+
+### Training status (end of session)
+- **GATE A (IDQN)**: 109+ episodes, process 33695, ~170% CPU, 2.7GB RAM
+- **GATE B (trf_coord)**: 32+ episodes, process 36670, ~370% CPU, 2.8GB RAM
+- Both using 800 sim-seconds per episode (160 steps, ~12s/ep)
+- ETA: ~3.3h total for 200 eps × 5 seeds
+- Logs: `logs/gate_a_idqn.log`, `logs/gate_b_trf.log`
+
+### Commits on `journal-upgrade-phases-0-2`
+- `b8c03c2` Phase 0: Foundation infrastructure
+- `0ff4b91` Phase 1: RL Core — IDQN agent + training loop
+- `d6cdcc2` Phase 2: Spatial Coordination Transformer
+- `744d9c1` fix: RESCO env factories honor caller's num_seconds
+- `d34f08c` fix: flush print output in train.py
+- `61fff8a` Phase 3: Max-Pressure and MPLight baselines
+- `2aca295` feat: add experiment matrix runner for Phase 3
+- `706830a` feat: equal-parameter ablation config for Phase 3.2
+- `8ce3b8b` feat: add make_figures.py for Phase 4
+
+### Next steps
+1. Monitor GATE A & B until completion (~3.3h)
+2. Evaluate trained models: compare IDQN vs trf_coord vs baselines on grid4x4 (5 seeds each)
+3. Run baselines on grid4x4 via experiment matrix runner
+4. Commit Phase 3 results
+5. Begin Phase 4: Statistical validation + figures (rliable IQM, performance profiles)
