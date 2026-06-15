@@ -108,17 +108,24 @@ def find_csv(run_dir: str) -> Optional[str]:
     """Find the sumo_rl CSV file in a run directory.
 
     sumo_rl writes to ``<out_csv_name><episode>ep.csv``.
-    We look for ``csv1ep.csv`` (first episode) by convention.
+    We look for the LAST episode CSV for the final episode metrics.
     """
-    # Direct lookup
-    candidate = os.path.join(run_dir, "csv1ep.csv")
-    if os.path.isfile(candidate):
-        return candidate
-    # Walk
+    # Walk and collect all ep.csv files
+    candidates = []
     for root, _, files in os.walk(run_dir):
         for f in files:
             if f.endswith("ep.csv"):
-                return os.path.join(root, f)
+                candidates.append(os.path.join(root, f))
+    if candidates:
+        # Sort by episode number and return the last one
+        def _ep_num(path):
+            name = os.path.basename(path)
+            try:
+                return int(name.replace("csv", "").replace("ep.csv", ""))
+            except ValueError:
+                return 0
+        candidates.sort(key=_ep_num)
+        return candidates[-1]
     return None
 
 
