@@ -36,6 +36,31 @@ AgentType = Union[IDQNAgent, TrfCoordAgent, MaxPressureAgent, MPLightAgent]
 _RL_AGENTS = (IDQNAgent, TrfCoordAgent)
 
 
+class FixedTimeAgent:
+    """Fixed-time cyclic controller. Round-robin every cycle_seconds/num_phases."""
+
+    def __init__(self, n_phases: int, cycle_seconds: int = 30):
+        self.n_phases = int(n_phases)
+        self.cycle_seconds = int(cycle_seconds)
+        self._counter = 0
+        self._last_switch = 0.0
+
+    def act(self, obs: np.ndarray, sim_time: float = 0.0) -> int:
+        if sim_time - self._last_switch >= self.cycle_seconds / max(self.n_phases, 1):
+            self._counter = (self._counter + 1) % self.n_phases
+            self._last_switch = sim_time
+        return self._counter
+
+    def on_episode_end(self) -> None:
+        pass
+
+    def save(self, path: str) -> None:
+        pass
+
+    def load(self, path: str) -> None:
+        pass
+
+
 def _init_tracker(cfg: DictConfig):
     tracker = cfg.get("tracker", "tensorboard")
     log_dir = os.path.join(cfg.run_dir, "tb")
@@ -138,7 +163,7 @@ def _select_action(agent: AgentType, obs_dict: Dict[str, np.ndarray], ts: str,
     """Select action — handle flat (IDQN), tokenised (trf_coord), and baseline agents."""
     if isinstance(agent, TrfCoordAgent):
         return agent.act(obs_dict)
-    elif isinstance(agent, (MaxPressureAgent, MPLightAgent)):
+    elif isinstance(agent, (MaxPressureAgent, MPLightAgent, FixedTimeAgent)):
         return agent.act(obs_dict[ts], sim_time=sim_time)
     else:
         return agent.act(obs_dict[ts].flatten().astype(np.float32))
@@ -190,7 +215,13 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
             print(f"  {k}: {v}")
 
     # Create agents
-    if agent_name in ("max_pressure", "mplight"):
+    if agent_name == "fixed_time":
+        from eval.evaluate import RuleBasedAgent
+        u = env.unwrapped.env
+        n_phases = u.traffic_signals[possible_agents[0]].num_green_phases
+        agents = {ts: FixedTimeAgent(n_phases=n_phases, cycle_seconds=cfg.agent.get("cycle_seconds", 30))
+                  for ts in possible_agents}
+    elif agent_name in ("max_pressure", "mplight"):
         from baselines.max_pressure import MaxPressureAgent
         from baselines.mplight import MPLightAgent
         AgentCls = MaxPressureAgent if agent_name == "max_pressure" else MPLightAgent
