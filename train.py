@@ -112,7 +112,7 @@ def _create_agents(
             for ts in possible_agents
         }
 
-    if agent_name == "trf_coord":
+    if agent_name.startswith("trf_coord"):
         return {
             ts: TrfCoordAgent(
                 obs_dim=obs_dim, act_dim=act_dim,
@@ -181,7 +181,7 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
     # Build adjacency graph for transformer agents (without closing env)
     adj: Dict[str, List[str]] = {}
     agent_name = cfg.agent.name
-    if agent_name == "trf_coord":
+    if agent_name.startswith("trf_coord"):
         from env.road_graph import build_adjacency
         u = env.unwrapped.env
         adj = build_adjacency(u._net, possible_agents)

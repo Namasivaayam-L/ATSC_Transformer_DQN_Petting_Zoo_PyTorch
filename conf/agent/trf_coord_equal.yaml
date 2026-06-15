@@ -1,0 +1,18 @@
+# Equal-parameter ablation: trf_coord matched to IDQN's parameter count.
+# IDQN (128,128) = 140,552 params.
+# This config: embedding_dim=72, 2 heads, 1 layer = 138,392 params (0.98×).
+#
+# Usage:
+#   python train.py agent=trf_coord_equal env=grid4x4 reward=dwt
+
+name: trf_coord_equal
+type: learned
+
+network:
+  type: transformer
+  num_heads: 2
+  num_enc_layers: 1
+  embedding_dim: 72
+  neighbour_radius: 1
+  include_neighbour_action: true
+  dueling: ${dueling}
