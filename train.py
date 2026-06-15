@@ -232,7 +232,7 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
         _log(tracker, "train/updates_per_ep", ep_updates, ep)
 
         print(f"  ep {ep:>4d} | reward {ep_reward:>8.1f} | loss {avg_loss:.4f} | "
-              f"eps {agents[possible_agents[0]].epsilon:.3f} | updates {ep_updates}")
+              f"eps {agents[possible_agents[0]].epsilon:.3f} | updates {ep_updates}", flush=True)
 
         save_interval = cfg.get("save_interval", 50)
         if (ep + 1) % save_interval == 0 or ep == cfg.num_episodes - 1:
@@ -263,16 +263,16 @@ def _mean_metrics(metrics: List[EpisodeMetrics]) -> EpisodeMetrics:
 def main(cfg: DictConfig) -> None:
     cfg.run_dir = os.getcwd()
     os.makedirs(cfg.run_dir, exist_ok=True)
-    print("[train] resolved config:\n", OmegaConf.to_yaml(cfg))
+    print("[train] resolved config:\n", OmegaConf.to_yaml(cfg), flush=True)
 
     seeds = list(range(int(cfg.seeds)))
     per_seed: List[EpisodeMetrics] = []
     for s in seeds:
-        print(f"\n[train] ===== seed {s} =====")
+        print(f"\n[train] ===== seed {s} =====", flush=True)
         m = train_one_seed(cfg, s, run_root=cfg.run_dir)
         per_seed.append(m)
         print(f"[train] seed {s}: travel_time={m.avg_travel_time:.2f}s, "
-              f"wait={m.avg_waiting_time:.2f}s, throughput={int(m.throughput)}")
+              f"wait={m.avg_waiting_time:.2f}s, throughput={int(m.throughput)}", flush=True)
 
     agg = aggregate_over_seeds(per_seed)
     with open(os.path.join(cfg.run_dir, "aggregate.json"), "w") as f:
