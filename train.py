@@ -27,10 +27,13 @@ os.environ.setdefault("SUMO_HOME", "/usr/share/sumo")
 
 from agents.idqn import IDQNAgent  # noqa: E402
 from agents.trf_coord import TrfCoordAgent  # noqa: E402
+from baselines.max_pressure import MaxPressureAgent  # noqa: E402
+from baselines.mplight import MPLightAgent  # noqa: E402
 from eval.metrics import EpisodeMetrics, aggregate_over_seeds, build_episode_metrics  # noqa: E402
 from utils.seeding import seed_everything  # noqa: E402
 
-AgentType = Union[IDQNAgent, TrfCoordAgent]
+AgentType = Union[IDQNAgent, TrfCoordAgent, MaxPressureAgent, MPLightAgent]
+_RL_AGENTS = (IDQNAgent, TrfCoordAgent)
 
 
 def _init_tracker(cfg: DictConfig):
@@ -130,10 +133,13 @@ def _create_agents(
     raise ValueError(f"Unknown agent: {agent_name}")
 
 
-def _select_action(agent: AgentType, obs_dict: Dict[str, np.ndarray], ts: str) -> int:
-    """Select action — handle both flat (IDQN) and tokenised (trf_coord) agents."""
+def _select_action(agent: AgentType, obs_dict: Dict[str, np.ndarray], ts: str,
+                   sim_time: float = 0.0) -> int:
+    """Select action — handle flat (IDQN), tokenised (trf_coord), and baseline agents."""
     if isinstance(agent, TrfCoordAgent):
         return agent.act(obs_dict)
+    elif isinstance(agent, (MaxPressureAgent, MPLightAgent)):
+        return agent.act(obs_dict[ts], sim_time=sim_time)
     else:
         return agent.act(obs_dict[ts].flatten().astype(np.float32))
 
@@ -183,7 +189,15 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
         for k, v in adj.items():
             print(f"  {k}: {v}")
 
-    agents = _create_agents(cfg, possible_agents, obs_dim, act_dim, adj)
+    # Create agents
+    if agent_name in ("max_pressure", "mplight"):
+        from baselines.max_pressure import MaxPressureAgent
+        from baselines.mplight import MPLightAgent
+        AgentCls = MaxPressureAgent if agent_name == "max_pressure" else MPLightAgent
+        u = env.unwrapped.env
+        agents = {ts: AgentCls(traffic_signal=u.traffic_signals[ts]) for ts in possible_agents}
+    else:
+        agents = _create_agents(cfg, possible_agents, obs_dim, act_dim, adj)
     global_step = 0
     ep_metrics: List[EpisodeMetrics] = []
 
@@ -196,8 +210,9 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
 
         while not done:
             actions = {}
+            sim_time = env.unwrapped.env.traffic_signals[possible_agents[0]].sumo.simulation.getTime()
             for ts in possible_agents:
-                actions[ts] = _select_action(agents[ts], obs_dict, ts)
+                actions[ts] = _select_action(agents[ts], obs_dict, ts, sim_time=sim_time)
 
             result = env.step(actions)
             if len(result) == 5:
@@ -211,11 +226,12 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
                 r = float(rewards[ts])
                 d = bool(term_dict.get(ts, False) or trunc_dict.get(ts, False))
                 ep_reward += r
-                _store_transition(agents[ts], obs_dict, next_obs_dict, ts, actions[ts], r, d)
-                loss = agents[ts].learn()
-                if loss is not None:
-                    ep_loss_sum += loss
-                    ep_updates += 1
+                if isinstance(agents[ts], _RL_AGENTS):
+                    _store_transition(agents[ts], obs_dict, next_obs_dict, ts, actions[ts], r, d)
+                    loss = agents[ts].learn()
+                    if loss is not None:
+                        ep_loss_sum += loss
+                        ep_updates += 1
 
             obs_dict = next_obs_dict
             done = all(term_dict.get(ts, False) or trunc_dict.get(ts, False)
@@ -228,11 +244,15 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
         avg_loss = ep_loss_sum / max(ep_updates, 1)
         _log(tracker, "train/ep_reward", ep_reward, ep)
         _log(tracker, "train/ep_loss", avg_loss, ep)
-        _log(tracker, "train/epsilon", agents[possible_agents[0]].epsilon, ep)
+        if isinstance(agents[possible_agents[0]], _RL_AGENTS):
+            _log(tracker, "train/epsilon", agents[possible_agents[0]].epsilon, ep)
         _log(tracker, "train/updates_per_ep", ep_updates, ep)
 
-        print(f"  ep {ep:>4d} | reward {ep_reward:>8.1f} | loss {avg_loss:.4f} | "
-              f"eps {agents[possible_agents[0]].epsilon:.3f} | updates {ep_updates}", flush=True)
+        eps_str = ""
+        if isinstance(agents[possible_agents[0]], _RL_AGENTS):
+            eps_str = f" | eps {agents[possible_agents[0]].epsilon:.3f}"
+        print(f"  ep {ep:>4d} | reward {ep_reward:>8.1f} | loss {avg_loss:.4f}"
+              f"{eps_str} | updates {ep_updates}", flush=True)
 
         save_interval = cfg.get("save_interval", 50)
         if (ep + 1) % save_interval == 0 or ep == cfg.num_episodes - 1:

@@ -1,0 +1,4 @@
+# Max-Pressure baseline
+# Non-RL: selects phase with highest pressure (incoming queue − outgoing queue)
+
+name: max_pressure

@@ -1,0 +1,4 @@
+# MPLight baseline
+# Pressure-based heuristic: selects phase with highest total pressure
+
+name: mplight
