@@ -181,8 +181,12 @@ def _store_transition(
         next_tokens = agent._build_tokens(next_obs_dict)
         agent.buffer.add(tokens, action, reward, next_tokens, done)
     else:
-        flat_cur = obs_dict[ts].flatten().astype(np.float32)
-        flat_next = next_obs_dict[ts].flatten().astype(np.float32)
+        flat_cur = np.zeros(agent.obs_dim, dtype=np.float32)
+        obs_flat = obs_dict[ts].flatten().astype(np.float32)
+        flat_cur[:len(obs_flat)] = obs_flat[:agent.obs_dim]
+        flat_next = np.zeros(agent.obs_dim, dtype=np.float32)
+        next_flat = next_obs_dict[ts].flatten().astype(np.float32)
+        flat_next[:len(next_flat)] = next_flat[:agent.obs_dim]
         agent.buffer.add(flat_cur, action, reward, flat_next, done)
 
 
@@ -199,8 +203,8 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
 
     # Infer obs/act dims from the ACTUAL env output
     sample_obs_dict, _ = env.reset()
-    sample_obs = sample_obs_dict[possible_agents[0]]
-    obs_dim = int(np.prod(sample_obs.shape))
+    # Use max obs_dim across all agents (cologne3 has heterogeneous lane counts)
+    obs_dim = max(int(np.prod(sample_obs_dict[ts].shape)) for ts in possible_agents)
     act_dim = int(env.action_spaces[possible_agents[0]].n)
 
     # Build adjacency graph for transformer agents (without closing env)

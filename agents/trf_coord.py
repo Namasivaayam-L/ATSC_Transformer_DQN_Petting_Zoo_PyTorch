@@ -255,15 +255,19 @@ class TrfCoordAgent:
         return self.epsilon_start + frac * (self.epsilon_end - self.epsilon_start)
 
     def _build_tokens(self, obs_dict: Dict[str, np.ndarray]) -> np.ndarray:
-        """Build token matrix (n_tokens, obs_dim) from raw obs dict."""
+        """Build token matrix (n_tokens, obs_dim) from raw obs dict.
+
+        Pads shorter obs to self.obs_dim (max across all agents).
+        """
         import numpy as np
         self_obs = obs_dict[self.agent_id].flatten().astype(np.float32)
         neighbours = self.adj.get(self.agent_id, [])
         k = min(len(neighbours), self.max_neighbours)
         tokens = np.zeros((1 + k, self.obs_dim), dtype=np.float32)
-        tokens[0] = self_obs
+        tokens[0, :len(self_obs)] = self_obs[:self.obs_dim]
         for i, n_id in enumerate(neighbours[:k]):
-            tokens[1 + i] = obs_dict[n_id].flatten().astype(np.float32)
+            n_obs = obs_dict[n_id].flatten().astype(np.float32)
+            tokens[1 + i, :len(n_obs)] = n_obs[:self.obs_dim]
         return tokens
 
     def act(self, obs_dict: Dict[str, np.ndarray], epsilon: Optional[float] = None) -> int:
