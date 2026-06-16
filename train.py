@@ -166,7 +166,10 @@ def _select_action(agent: AgentType, obs_dict: Dict[str, np.ndarray], ts: str,
     elif isinstance(agent, (MaxPressureAgent, MPLightAgent, FixedTimeAgent)):
         return agent.act(obs_dict[ts], sim_time=sim_time)
     else:
-        return agent.act(obs_dict[ts].flatten().astype(np.float32))
+        flat = np.zeros(agent.obs_dim, dtype=np.float32)
+        obs_flat = obs_dict[ts].flatten().astype(np.float32)
+        flat[:len(obs_flat)] = obs_flat[:agent.obs_dim]
+        return agent.act(flat)
 
 
 def _store_transition(
