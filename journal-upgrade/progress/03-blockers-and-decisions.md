@@ -47,3 +47,18 @@ Planning-phase decisions are in `../memory/02-decisions-log.md` — do NOT dupli
 - **Context:** Original implementation manually iterated encoder layers to extract attention weights, but `norm_first=True` sub-layer order was wrong, causing shape mismatch.
 - **Decision:** Use standard `nn.TransformerEncoder.forward()` in the main forward path. Add separate `forward_with_attention()` for interpretability that correctly handles `norm_first` sub-layer order.
 - **Impact:** Cleaner, correct forward pass. Attention weights still available for analysis.
+
+### Decision #5 — Use `setsid` not `nohup` for background training (2026-06-16)
+- **Context:** opencode bash tool sends SIGTERM on timeout. `nohup` doesn't fully detach from parent process signal group.
+- **Decision:** Always use `setsid` for background training processes.
+- **Impact:** Training no longer crashes when opencode bash tool times out.
+
+### Decision #6 — Max 4 concurrent SUMO instances (2026-06-16)
+- **Context:** Running 5+ SUMO instances simultaneously causes "peer shutdown" / connection reset errors.
+- **Decision:** Limit concurrent SUMO instances to 4 on this machine (GTX 1650, 22GB RAM).
+- **Impact:** Baselines and RL agents must be run sequentially if >4 total.
+
+### Decision #7 — MPLight uses obs-only pressure (2026-06-16)
+- **Context:** Original MPLight design queried SUMO API for phase durations, causing TraCI connection errors with parallel environments.
+- **Decision:** Compute pressure directly from the observation vector (lane vehicle counts), same as MaxPressure but with multi-phase routing logic.
+- **Impact:** MPLight ≈ MaxPressure in current implementation; differentiation may need phase-aware reward shaping.

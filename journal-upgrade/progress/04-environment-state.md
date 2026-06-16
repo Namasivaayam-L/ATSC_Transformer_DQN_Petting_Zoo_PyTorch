@@ -3,7 +3,7 @@
 Tracks what's installed, configured, and any environment-specific notes. Update this whenever
 you install packages, change configs, or discover environment quirks.
 
-> **Last updated:** 2026-06-14 16:24 +05:30 — Session #3
+> **Last updated:** 2026-06-16 11:30 +05:30 — Session #5
 
 ---
 
@@ -43,14 +43,14 @@ you install packages, change configs, or discover environment quirks.
 | `agents/` | ✅ Committed | `idqn.py` + `trf_coord.py` + `__init__.py` |
 | `env/` | ✅ Committed | `road_graph.py` — adjacency graph from SUMO net |
 | `eval/` | ✅ Committed | Full evaluation pipeline (metrics, evaluate, aggregate) |
-| `baselines/` | 🟡 Stub | `__init__.py` only — awaits Phase 3 |
+| `baselines/` | ✅ Committed | `max_pressure.py`, `mplight.py` + `__init__.py` |
 | `utils/` | ✅ Committed | `seeding.py` added |
 | `legacy/` | ✅ Committed | Dead code preserved for reference (sac/, trf_dqn/, models.py) |
 | `journal-upgrade/` | ✅ Committed | Complete planning + progress tracking |
 | `nets/RESCO/` | ✅ External | Downloaded from GitHub, NOT tracked in git |
 | `tb/` | ⚡ Artifacts | Run logs, gitignored |
 | `seed_*/` | ⚡ Artifacts | Training output per seed, gitignored |
-| `figures/` | 🔴 Not created | Phase 4 |
+| `figures/` | ✅ Committed | `make_figures.py` — regenerates all figures/tables |
 | `paper/` | 🔴 Not created | Phase 5 |
 
 ## Known gotchas
@@ -64,3 +64,8 @@ you install packages, change configs, or discover environment quirks.
 8. ✅ **`train_freq` fix**: Gradient updates every `train_freq` env steps (not per episode), after `learning_starts` warmup.
 9. ✅ **Target network**: Separate target net with hard update every `target_update_interval` steps. Optional Polyak averaging via `tau` config.
 10. ✅ **Buffer size check**: Both agents check `max(learning_starts, batch_size)` before sampling, preventing batch-size-greater-than-buffer crashes.
+11. ✅ **`setsid` for background training**: opencode bash tool sends SIGTERM on timeout. Use `setsid` not `nohup` for fully detached background processes.
+12. ✅ **Max 4 concurrent SUMO instances**: 5+ causes "peer shutdown" errors on GTX 1650 / 22GB RAM machine.
+13. ✅ **Heterogeneous obs padding**: cologne3 has agents with 5/6/8 lanes. Pad all obs to max (640-dim) with zeros.
+14. ✅ **MPLight simplified**: Compute pressure from obs vector only, no SUMO API calls (avoids TraCI errors with parallel envs).
+15. ✅ **`find_csv` returns last episode**: First episode CSV has all zeros (simulation startup). Always use last for metrics.

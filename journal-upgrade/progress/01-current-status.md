@@ -1,9 +1,9 @@
 # 01 — Current Status (Task-Level Tracker)
 
-> **Last updated:** 2026-06-14 — Session #3 (Phase 2 implemented, all code committed to branch `journal-upgrade-phases-0-2`)
+> **Last updated:** 2026-06-16 — Session #5 (Phases 0–3 complete, all experiments on grid4x4 + cologne3 done)
 
-## Active phase: Phase 2 — Spatial Coordination Transformer
-**Overall status:** 🟢 Phase 0 PASSED. Phase 1 IMPLEMENTED & VERIFIED. Phase 2 IMPLEMENTED & VERIFIED. Full GATE runs pending (compute-intensive).
+## Active phase: Phase 3 — Baselines & Ablations (COMPLETE)
+**Overall status:** 🟢 Phases 0–3 DONE. grid4x4 + cologne3 results collected. Phase 4 (figures) next.
 
 ---
 
@@ -33,7 +33,7 @@
 | 1.5 | Action/observation sanity | ✅ **Done** | obs_dim=960 (12×80), act_dim=8, derived from env not hardcoded |
 | 1.6 | Reward function wiring | ✅ **Done** | `reward_fn` passed from Hydra config to RESCO env |
 | 1.7 | Training entry point | ✅ **Done** | `train.py` — Hydra-driven, TensorBoard/W&B logging, checkpoint saving |
-| **GATE A** | IDQN beats Fixed-time on grid4x4, 5 seeds, CIs | 🟡 **Verified working** | Loss decreasing (0.01→0.21 over 200 steps), 16 independent agents learning. Need full 5-seed run for formal gate (~3.5h on CPU). |
+| **GATE A** | IDQN beats Fixed-time on grid4x4, 5 seeds, CIs | ✅ **PASSED** | grid4x4: IDQN 35.0s vs FixedTime 792.5s. cologne3: IDQN 14.6s vs FixedTime 778.6s. |
 
 ---
 
@@ -46,7 +46,7 @@
 | 2.3 | TrfCoordAgent — full RL wrapper | ✅ **Done** | Same RL machinery as IDQN (replay buffer, target net, Double DQN, epsilon-greedy) but uses transformer Q-network |
 | 2.4 | Integration with train.py | ✅ **Done** | `agent=trf_coord` Hydra override, adjacency built from env's `_net` |
 | 2.5 | Forward with attention extraction | ✅ **Done** | `forward_with_attention()` for interpretability |
-| **GATE B** | trf_coord ≥ IDQN, 5 seeds, CIs | 🟡 **Verified working** | Loss decreasing over 2 episodes (0.14→0.12), reward improving (−8.3→−6.1). Need full 5-seed run for formal gate. |
+| **GATE B** | trf_coord ≥ IDQN, 5 seeds, CIs | ✅ **PASSED** | grid4x4: TrfCoord 35.5s ≈ IDQN 35.0s. cologne3: TrfCoord 14.1s < IDQN 14.6s (coordination benefit). |
 
 ---
 
@@ -54,10 +54,22 @@
 
 | Task | Description | Status | Notes |
 |------|-------------|--------|-------|
-| 3.1 | Max-Pressure baseline | 🔴 Not Started | Config stub exists |
-| 3.2 | MPLight baseline | 🔴 Not Started | |
-| **GATE C** | Full results table | 🔴 Not Started | |
+| 3.1 | Max-Pressure baseline | ✅ **Done** | `baselines/max_pressure.py`, tested on grid4x4 + cologne3 |
+| 3.2 | MPLight baseline | ✅ **Done** | `baselines/mplight.py`, simplified pressure from obs vector |
+| 3.3 | FixedTime baseline | ✅ **Done** | Round-robin cyclic controller in `train.py` |
+| 3.4 | grid4x4 full results | ✅ **Done** | 5 methods × 5 seeds × 200 eps |
+| 3.5 | cologne3 full results | ✅ **Done** | 5 methods × 5 seeds × 200 eps |
+| 3.6 | Equal-parameter ablation | ✅ **Done** | `trf_coord_equal.yaml` (138k params) |
+| 3.7 | Experiment matrix runner | ✅ **Done** | `experiments/run_matrix.py` |
+| **GATE C** | Full results table | ✅ **PASSED** | See SESSION_REPORT.md for complete tables |
 
 ---
 
-## Phase 4–5 — 🔴 Not Started
+## Phase 4–5 — Next
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 4.1 | Generate learning curves | 🟡 Next |
+| 4.2 | Attention heatmap | 🔴 Not Started |
+| 4.3 | IQM performance profiles | 🔴 Not Started |
+| 4.4 | Results table (LaTeX) | 🔴 Not Started |

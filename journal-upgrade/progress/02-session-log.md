@@ -286,3 +286,70 @@ Each session appends an entry here. This is the authoritative record of what hap
 3. Run baselines on grid4x4 via experiment matrix runner
 4. Commit Phase 3 results
 5. Begin Phase 4: Statistical validation + figures (rliable IQM, performance profiles)
+
+---
+
+## Session #5 — 2026-06-15 to 2026-06-16
+
+**Agent:** Opencode (mimo-v2.5-free)
+**Duration:** ~12 hours (across two days)
+
+### What was done
+
+1. **Completed GATE A & B runs on grid4x4** (5 seeds × 200 eps each):
+   - IDQN: 35.0s [29.1, 42.5] travel time
+   - TrfCoord: 35.5s [30.0, 39.3] travel time
+   - Both beat FixedTime (792.5s) by >20×
+
+2. **Implemented baselines** (commits `61fff8a`, `5869ec2`):
+   - `baselines/max_pressure.py`: MaxPressureAgent
+   - `baselines/mplight.py`: MPLightAgent (simplified, obs-only pressure)
+   - FixedTimeAgent: Round-robin cyclic controller in train.py
+
+3. **Ran baselines on grid4x4** (5 seeds × 200 eps):
+   - MaxPressure: 20.0s [19.9, 20.0] — optimal on tiny grid
+   - MPLight: 20.0s [19.9, 20.0] — identical to MaxPressure
+   - FixedTime: 792.5s [791.3, 795.0]
+
+4. **Ran all 5 methods on cologne3** (real topology, 3 agents with heterogeneous lane counts):
+   - IDQN: 14.6s [7.6, 22.3]
+   - TrfCoord: 14.1s [7.5, 20.7] — **coordination benefit emerges**
+   - MaxPressure: 480.1s [480.1, 480.1]
+   - MPLight: 480.1s [480.1, 480.1]
+   - FixedTime: 778.6s [778.6, 778.6]
+
+5. **Fixed 7 critical bugs**:
+   - RESCO `num_seconds` via `setdefault` (`744d9c1`)
+   - `find_csv` returns last episode (`67c3a89`)
+   - Output dir isolation (`401670c`, `3ed15cb`, `8df23af`)
+   - Heterogeneous obs padding (`61bdbe3`, `0f20ff3`)
+   - SUMO connection: use `setsid` not `nohup`
+
+6. **Created infrastructure**:
+   - `experiments/run_matrix.py`: Full experiment matrix runner
+   - `figures/make_figures.py`: Regenerates all figures/tables
+   - `conf/agent/trf_coord_equal.yaml`: Equal-parameter ablation (138k params)
+
+7. **Documented everything** in `journal-upgrade/progress/SESSION_REPORT.md`
+
+### Key findings
+- RL methods (14–15s) massively outperform baselines (480–779s) on cologne3
+- TrfCoord slightly beats IDQN on cologne3 (14.1s vs 14.6s) — coordination benefit
+- MaxPressure is optimal on grid4x4 but poor on cologne3
+- All baselines are deterministic (identical across 5 seeds)
+- `setsid` required for background training (opencode bash tool sends SIGTERM on timeout)
+
+### Commits on `journal-upgrade-phases-0-2`
+- `67c3a89` fix: find_csv returns LAST episode CSV, not first
+- `3ed15cb` fix: use cfg.reward.name for output dir (not DictConfig)
+- `401670c` fix: isolate run output directories per agent/scenario/reward
+- `1feeaa8` fix: respect cfg.run_dir if provided via CLI
+- `8df23af` fix: always use agent-specific output dirs, ignore Hydra run_dir
+- `61bdbe3` fix: heterogeneous obs shapes for cologne3
+- `0f20ff3` fix: pad obs in _select_action for heterogeneous agents
+
+### Next steps
+1. Reward sweep: dwt, pressure, queue on grid4x4 (all 5 methods)
+2. Equal-parameter ablation: trf_coord_equal vs idqn on grid4x4
+3. Generate figures with make_figures.py
+4. Begin Phase 4: Statistical validation + paper figures
