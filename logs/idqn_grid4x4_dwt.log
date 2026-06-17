@@ -1,0 +1,60 @@
+[train] resolved config:
+ env:
+  scenario: grid4x4
+  net_file: null
+  route_file: null
+  additional_sumo_cmd: null
+  use_gui: false
+  num_episodes: 50
+  num_seconds: 3600
+agent:
+  name: idqn
+  type: learned
+  network:
+    type: mlp
+    hidden_sizes:
+    - 128
+    - 128
+    activation: relu
+    dueling: ${dueling}
+reward:
+  name: dwt
+  fn: dwt
+seed: 0
+seeds: 5
+run_dir: /home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/idqn_grid4x4_dwt
+tracker: tensorboard
+wandb_project: traffic-sense-journal
+sumo_home: /usr/share/sumo
+num_seconds: 800
+begin_time: 0
+delta_time: 5
+yellow_time: 2
+min_green: 5
+max_green: 60
+single_agent: false
+num_episodes: 200
+learning_starts: 1000
+train_freq: 4
+batch_size: 64
+gamma: 0.99
+learning_rate: 0.0001
+buffer_size: 50000
+target_update_interval: 1000
+tau: null
+dueling: false
+eval_episodes: 1
+
+
+[train] ===== seed 0 =====
+Step #0.00 (0ms ?*RT. ?UPS, TraCI: 35ms, vehicles TOT 0 ACT 0 BUF 0)                     
+/home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/.venv/lib/python3.12/site-packages/pettingzoo/utils/conversions.py:132: UserWarning: The base environment `sumo_rl_v0` does not have a `render_mode` defined.
+  warnings.warn(
+/home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/.venv/lib/python3.12/site-packages/pettingzoo/utils/conversions.py:158: UserWarning: The `action_spaces` dictionary is deprecated. Use the `action_space` function instead.
+  warnings.warn(
+Step #0.00 (0ms ?*RT. ?UPS, TraCI: 1019ms, vehicles TOT 0 ACT 0 BUF 0)                   
+ Retrying in 1 seconds
+ Retrying in 1 seconds
+ Retrying in 1 seconds
+  ep    0 | reward     -4.1 | loss 0.0000 | eps 0.998 | updates 0
+Step #0.00 (0ms ?*RT. ?UPS, TraCI: 73ms, vehicles TOT 1 ACT 1 BUF 0)                      Step #100.00 (0ms ?*RT. ?UPS, TraCI: 54ms, vehicles TOT 21 ACT 21 BUF 0)                  Step #200.00 (0ms ?*RT. ?UPS, TraCI: 63ms, vehicles TOT 45 ACT 36 BUF 0)                  Step #300.00 (1ms ~= 1000.00*RT, ~48000.00UPS, TraCI: 80ms, vehicles TOT 67 ACT 48 BUF 0) Step #400.00 (0ms ?*RT. ?UPS, TraCI: 75ms, vehicles TOT 84 ACT 38 BUF 0)                  Step #500.00 (1ms ~= 1000.00*RT, ~54000.00UPS, TraCI: 92ms, vehicles TOT 115 ACT 54 BUF 0)Step #600.00 (0ms ?*RT. ?UPS, TraCI: 74ms, vehicles TOT 141 ACT 55 BUF 0)                 Step #700.00 (0ms ?*RT. ?UPS, TraCI: 92ms, vehicles TOT 164 ACT 54 BUF 0)                 Step #800.00 (1ms ~= 1000.00*RT, ~53000.00UPS, TraCI: 96ms, vehicles TOT 190 ACT 53 BUF 0)

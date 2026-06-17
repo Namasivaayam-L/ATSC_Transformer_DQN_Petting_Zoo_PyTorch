@@ -1,0 +1,74 @@
+[train] resolved config:
+ env:
+  scenario: cologne3
+  net_file: null
+  route_file: null
+  additional_sumo_cmd: null
+  use_gui: false
+  num_episodes: 30
+  num_seconds: 3600
+agent:
+  name: idqn
+  type: learned
+  network:
+    type: mlp
+    hidden_sizes:
+    - 128
+    - 128
+    activation: relu
+    dueling: ${dueling}
+reward:
+  name: dwt
+  fn: dwt
+seed: 0
+seeds: 1
+run_dir: /home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/idqn_cologne3_dwt
+tracker: tensorboard
+wandb_project: traffic-sense-journal
+sumo_home: /usr/share/sumo
+num_seconds: 800
+begin_time: 0
+delta_time: 5
+yellow_time: 2
+min_green: 5
+max_green: 60
+single_agent: false
+num_episodes: 3
+learning_starts: 1000
+train_freq: 4
+batch_size: 64
+gamma: 0.99
+learning_rate: 0.0001
+buffer_size: 50000
+target_update_interval: 1000
+tau: null
+dueling: false
+eval_episodes: 1
+
+
+[train] ===== seed 0 =====
+Step #0.00 (0ms ?*RT. ?UPS, TraCI: 6ms, vehicles TOT 0 ACT 0 BUF 0)                      
+/home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/.venv/lib/python3.12/site-packages/pettingzoo/utils/conversions.py:132: UserWarning: The base environment `sumo_rl_v0` does not have a `render_mode` defined.
+  warnings.warn(
+/home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/.venv/lib/python3.12/site-packages/pettingzoo/utils/conversions.py:158: UserWarning: The `action_spaces` dictionary is deprecated. Use the `action_space` function instead.
+  warnings.warn(
+Step #25200.00 (0ms ?*RT. ?UPS, TraCI: 1038ms, vehicles TOT 0 ACT 0 BUF 0)                
+ Retrying in 1 seconds
+ Retrying in 1 seconds
+ Retrying in 1 seconds
+  ep    0 | reward    -21.7 | loss 0.0000 | eps 0.998 | updates 0
+Step #25200.00 (0ms ?*RT. ?UPS, TraCI: 8ms, vehicles TOT 1 ACT 1 BUF 0)                   Step #25300.00 (0ms ?*RT. ?UPS, TraCI: 16ms, vehicles TOT 83 ACT 44 BUF 1)                Step #25400.00 (1ms ~= 1000.00*RT, ~65000.00UPS, TraCI: 22ms, vehicles TOT 199 ACT 65 BUF Step #25500.00 (0ms ?*RT. ?UPS, TraCI: 20ms, vehicles TOT 303 ACT 96 BUF 8)               Step #25600.00 (0ms ?*RT. ?UPS, TraCI: 28ms, vehicles TOT 374 ACT 68 BUF 19)              Step #25700.00 (0ms ?*RT. ?UPS, TraCI: 33ms, vehicles TOT 467 ACT 74 BUF 13)              Step #25800.00 (1ms ~= 1000.00*RT, ~85000.00UPS, TraCI: 26ms, vehicles TOT 565 ACT 85 BUF Step #25900.00 (1ms ~= 1000.00*RT, ~77000.00UPS, TraCI: 28ms, vehicles TOT 656 ACT 77 BUF Step #26000.00 (1ms ~= 1000.00*RT, ~75000.00UPS, TraCI: 34ms, vehicles TOT 739 ACT 75 BUF 
+ Retrying in 1 seconds
+  ep    1 | reward     -3.6 | loss 0.0000 | eps 0.996 | updates 0
+Step #25200.00 (0ms ?*RT. ?UPS, TraCI: 12ms, vehicles TOT 1 ACT 1 BUF 0)                  Step #25300.00 (1ms ~= 1000.00*RT, ~48000.00UPS, TraCI: 17ms, vehicles TOT 83 ACT 48 BUF 1Step #25400.00 (0ms ?*RT. ?UPS, TraCI: 21ms, vehicles TOT 199 ACT 78 BUF 0)               Step #25500.00 (1ms ~= 1000.00*RT, ~84000.00UPS, TraCI: 24ms, vehicles TOT 311 ACT 84 BUF Step #25600.00 (0ms ?*RT. ?UPS, TraCI: 22ms, vehicles TOT 393 ACT 51 BUF 0)               Step #25700.00 (0ms ?*RT. ?UPS, TraCI: 27ms, vehicles TOT 473 ACT 58 BUF 7)               Step #25800.00 (0ms ?*RT. ?UPS, TraCI: 27ms, vehicles TOT 573 ACT 79 BUF 1)               Step #25900.00 (0ms ?*RT. ?UPS, TraCI: 16ms, vehicles TOT 656 ACT 47 BUF 0)               Step #26000.00 (0ms ?*RT. ?UPS, TraCI: 26ms, vehicles TOT 739 ACT 62 BUF 0)               
+ Retrying in 1 seconds
+  ep    2 | reward   -354.4 | loss 0.0000 | eps 0.994 | updates 0
+Step #25200.00 (0ms ?*RT. ?UPS, TraCI: 10ms, vehicles TOT 1 ACT 1 BUF 0)                  Step #25300.00 (1ms ~= 1000.00*RT, ~45000.00UPS, TraCI: 17ms, vehicles TOT 83 ACT 45 BUF 1Step #25400.00 (0ms ?*RT. ?UPS, TraCI: 21ms, vehicles TOT 199 ACT 77 BUF 0)               Step #25500.00 (1ms ~= 1000.00*RT, ~118000.00UPS, TraCI: 28ms, vehicles TOT 287 ACT 118 BUStep #25600.00 (1ms ~= 1000.00*RT, ~154000.00UPS, TraCI: 51ms, vehicles TOT 355 ACT 154 BUStep #25700.00 (1ms ~= 1000.00*RT, ~184000.00UPS, TraCI: 56ms, vehicles TOT 421 ACT 184 BUStep #25800.00 (2ms ~= 500.00*RT, ~101000.00UPS, TraCI: 53ms, vehicles TOT 490 ACT 202 BUFStep #25900.00 (2ms ~= 500.00*RT, ~104500.00UPS, TraCI: 55ms, vehicles TOT 553 ACT 209 BUFStep #26000.00 (1ms ~= 1000.00*RT, ~222000.00UPS, TraCI: 48ms, vehicles TOT 620 ACT 222 BU
+[train] seed 0: travel_time=19.47s, wait=4.75s, throughput=13
+
+[train] aggregate (mean ± 95% bootstrap CI):
+       avg_travel_time = 19.470  [19.470, 19.470]  n=1
+      avg_waiting_time = 4.754  [4.754, 4.754]  n=1
+     mean_queue_length = 17.760  [17.760, 17.760]  n=1
+            throughput = 13.333  [13.333, 13.333]  n=1
+       total_time_loss = 518.667  [518.667, 518.667]  n=1

@@ -1,0 +1,60 @@
+[train] resolved config:
+ env:
+  scenario: grid4x4
+  net_file: null
+  route_file: null
+  additional_sumo_cmd: null
+  use_gui: false
+  num_episodes: 50
+  num_seconds: 3600
+agent:
+  name: fixed_time
+  type: rule_based
+  cycle_seconds: 30
+  all_red: 0
+reward:
+  name: dwt
+  fn: dwt
+seed: 0
+seeds: 5
+run_dir: /home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/fixed_time_grid4x4_dwt
+tracker: tensorboard
+wandb_project: traffic-sense-journal
+sumo_home: /usr/share/sumo
+num_seconds: 800
+begin_time: 0
+delta_time: 5
+yellow_time: 2
+min_green: 5
+max_green: 60
+single_agent: false
+num_episodes: 200
+learning_starts: 1000
+train_freq: 4
+batch_size: 64
+gamma: 0.99
+learning_rate: 0.0001
+buffer_size: 50000
+target_update_interval: 1000
+tau: null
+dueling: false
+eval_episodes: 1
+
+
+[train] ===== seed 0 =====
+Step #0.00 (0ms ?*RT. ?UPS, TraCI: 43ms, vehicles TOT 0 ACT 0 BUF 0)                     
+/home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/.venv/lib/python3.12/site-packages/pettingzoo/utils/conversions.py:132: UserWarning: The base environment `sumo_rl_v0` does not have a `render_mode` defined.
+  warnings.warn(
+/home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch/.venv/lib/python3.12/site-packages/pettingzoo/utils/conversions.py:158: UserWarning: The `action_spaces` dictionary is deprecated. Use the `action_space` function instead.
+  warnings.warn(
+Step #0.00 (0ms ?*RT. ?UPS, TraCI: 86ms, vehicles TOT 0 ACT 0 BUF 0)                     
+ Retrying in 1 seconds
+ Retrying in 1 seconds
+ Retrying in 1 seconds
+  ep    0 | reward   -180.0 | loss 0.0000 | updates 0
+Step #0.00 (0ms ?*RT. ?UPS, TraCI: 103ms, vehicles TOT 1 ACT 1 BUF 0)                     Step #100.00 (0ms ?*RT. ?UPS, TraCI: 76ms, vehicles TOT 21 ACT 21 BUF 0)                  Step #200.00 (0ms ?*RT. ?UPS, TraCI: 75ms, vehicles TOT 45 ACT 37 BUF 0)                  Step #300.00 (0ms ?*RT. ?UPS, TraCI: 73ms, vehicles TOT 67 ACT 43 BUF 0)                  Step #400.00 (1ms ~= 1000.00*RT, ~44000.00UPS, TraCI: 103ms, vehicles TOT 84 ACT 44 BUF 0)Step #500.00 (1ms ~= 1000.00*RT, ~65000.00UPS, TraCI: 94ms, vehicles TOT 115 ACT 65 BUF 0)Step #600.00 (1ms ~= 1000.00*RT, ~71000.00UPS, TraCI: 101ms, vehicles TOT 141 ACT 71 BUF 0Step #700.00 (1ms ~= 1000.00*RT, ~79000.00UPS, TraCI: 106ms, vehicles TOT 164 ACT 79 BUF 0Step #800.00 (1ms ~= 1000.00*RT, ~90000.00UPS, TraCI: 111ms, vehicles TOT 190 ACT 90 BUF 0
+ Retrying in 1 seconds
+  ep    1 | reward   -574.3 | loss 0.0000 | updates 0
+Step #0.00 (0ms ?*RT. ?UPS, TraCI: 93ms, vehicles TOT 1 ACT 1 BUF 0)                      Step #100.00 (0ms ?*RT. ?UPS, TraCI: 66ms, vehicles TOT 21 ACT 21 BUF 0)                  Step #200.00 (0ms ?*RT. ?UPS, TraCI: 77ms, vehicles TOT 45 ACT 44 BUF 0)                  Step #300.00 (0ms ?*RT. ?UPS, TraCI: 145ms, vehicles TOT 67 ACT 64 BUF 0)                 Step #400.00 (1ms ~= 1000.00*RT, ~76000.00UPS, TraCI: 114ms, vehicles TOT 84 ACT 76 BUF 0)Step #500.00 (1ms ~= 1000.00*RT, ~103000.00UPS, TraCI: 94ms, vehicles TOT 115 ACT 103 BUF Step #600.00 (1ms ~= 1000.00*RT, ~124000.00UPS, TraCI: 111ms, vehicles TOT 141 ACT 124 BUFStep #700.00 (1ms ~= 1000.00*RT, ~145000.00UPS, TraCI: 154ms, vehicles TOT 164 ACT 145 BUFStep #800.00 (1ms ~= 1000.00*RT, ~168000.00UPS, TraCI: 121ms, vehicles TOT 190 ACT 168 BUF
+Step #0.00 (0ms ?*RT. ?UPS, TraCI: 89ms, vehicles TOT 1 ACT 1 BUF 0)                      Step #100.00 (0ms ?*RT. ?UPS, TraCI: 82ms, vehicles TOT 21 ACT 21 BUF 0)                  Step #200.00 (0ms ?*RT. ?UPS, TraCI: 72ms, vehicles TOT 45 ACT 44 BUF 0)                  Step #300.00 (1ms ~= 1000.00*RT, ~64000.00UPS, TraCI: 82ms, vehicles TOT 67 ACT 64 BUF 0) Step #400.00 (1ms ~= 1000.00*RT, ~76000.00UPS, TraCI: 100ms, vehicles TOT 84 ACT 76 BUF 0)Step #500.00 (1ms ~= 1000.00*RT, ~103000.00UPS, TraCI: 101ms, vehicles TOT 115 ACT 103 BUFStep #600.00 (1ms ~= 1000.00*RT, ~124000.00UPS, TraCI: 123ms, vehicles TOT 141 ACT 124 BUFError: tcpip::Socket::recvAndCheck @ recv: peer shutdown
+Quitting (on error).
