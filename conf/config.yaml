@@ -17,6 +17,7 @@ seed: 0
 seeds: 5                       # for the aggregate/eval sweep
 run_dir: ${oc.env:RUN_DIR,outputs/${now:%Y-%m-%d_%H-%M-%S}}
 tracker: tensorboard            # 'tensorboard' (default, offline) | 'wandb'
+device: auto                    # 'auto' (use CUDA if available), 'cpu', 'cuda'
 wandb_project: traffic-sense-journal
 
 # SUMO / sim

@@ -222,6 +222,14 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
             print(f"  {k}: {v}")
 
     # Create agents
+    device_cfg = cfg.get("device", "auto")
+    if device_cfg == "auto":
+        import torch
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    else:
+        device = device_cfg
+    print(f"[train] Using device: {device}")
+
     if agent_name == "fixed_time":
         from eval.evaluate import RuleBasedAgent
         u = env.unwrapped.env
@@ -235,7 +243,7 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
         u = env.unwrapped.env
         agents = {ts: AgentCls(traffic_signal=u.traffic_signals[ts]) for ts in possible_agents}
     else:
-        agents = _create_agents(cfg, possible_agents, obs_dim, act_dim, adj)
+        agents = _create_agents(cfg, possible_agents, obs_dim, act_dim, adj, device=device)
     global_step = 0
     ep_metrics: List[EpisodeMetrics] = []
 
