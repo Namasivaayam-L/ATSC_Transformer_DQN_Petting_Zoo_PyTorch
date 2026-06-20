@@ -47,9 +47,8 @@ you install packages, change configs, or discover environment quirks.
 | `utils/` | ✅ Committed | `seeding.py` added |
 | `legacy/` | ✅ Committed | Dead code preserved for reference (sac/, trf_dqn/, models.py) |
 | `journal-upgrade/` | ✅ Committed | Complete planning + progress tracking |
+| `results/` | ⚡ Untracked | Centralized output: `results/{scenario}/{agent}/{reward}/` with `seed_*/`, `aggregate.json`, `tb/` per experiment |
 | `nets/RESCO/` | ✅ External | Downloaded from GitHub, NOT tracked in git |
-| `tb/` | ⚡ Artifacts | Run logs, gitignored |
-| `seed_*/` | ⚡ Artifacts | Training output per seed, gitignored |
 | `figures/` | ✅ Committed | `make_figures.py` — regenerates all figures/tables |
 | `paper/` | 🔴 Not created | Phase 5 |
 

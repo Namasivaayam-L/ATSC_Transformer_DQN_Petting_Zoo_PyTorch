@@ -1,9 +1,9 @@
-outputs
+results/outputs/
+results/tb/
+results/*/*/*/tb/
+results/*/*/*/seed_*/
+results/*/*/*/checkpoints/
 nets
-pt
-tb/
-aggregate.json
-seed_*/
 sumo_rl.egg-info/
 __pycache__
 .venv
