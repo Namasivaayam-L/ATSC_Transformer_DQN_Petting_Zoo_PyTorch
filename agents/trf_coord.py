@@ -162,7 +162,7 @@ class CoordTransformerQ(nn.Module):
         for layer in self.transformer.layers:
             # norm_first: norm -> attn -> residual -> norm -> ffn -> residual
             h1 = layer.norm1(h)
-            h_attn, attn_w = layer.self_attn(h1, h1, h1, need_weights=True)
+            h_attn, attn_w = layer.self_attn(h1, h1, h1, need_weights=True, average_attn_weights=False)
             h = h + h_attn
             h2 = layer.norm2(h)
             h = h + layer.linear2(layer.activation(layer.linear1(h2)))
@@ -330,6 +330,16 @@ class TrfCoordAgent:
             "optimizer": self.optimizer.state_dict(),
             "update_count": self._update_count,
             "episode_count": self._episode_count,
+            "adj": self.adj,
+            "agent_id": self.agent_id,
+            "obs_dim": self.obs_dim,
+            "act_dim": self.act_dim,
+            "n_tokens": self.n_tokens,
+            "config": {
+                "embedding_dim": self.token_proj.out_features if hasattr(self, 'token_proj') else self.online_net.token_proj.out_features,
+                "num_heads": self.online_net.transformer.layers[0].self_attn.num_heads,
+                "num_enc_layers": len(self.online_net.transformer.layers),
+            },
         }, path)
 
     def load(self, path: str) -> None:

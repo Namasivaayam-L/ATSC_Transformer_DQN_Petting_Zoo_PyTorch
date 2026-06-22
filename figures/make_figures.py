@@ -332,14 +332,7 @@ def plot_iqm_profiles(
     reward: str = "dwt",
     save_dir: str = "figures",
 ):
-    """Plot IQM + performance profiles using rliable (if available)."""
-    try:
-        from rliable import library as rly
-        from rliable import metrics as rly_metrics
-        has_rliable = True
-    except ImportError:
-        has_rliable = False
-        print("  rliable not installed — using manual IQM computation")
+    """Plot IQM + performance profiles (manual computation, no rliable)."""
 
     if methods is None:
         methods = ["idqn", "trf_coord", "trf_coord_equal", "max_pressure", "mplight"]
@@ -412,61 +405,138 @@ def plot_attention_heatmap(
     env_name: str = "grid4x4",
     save_dir: str = "figures",
 ):
-    """Plot attention heatmap from a trained trf_coord agent."""
-    # Find any trf_coord checkpoint
-    combos = list_combos(results_dir, agent="trf_coord", env=env_name)
-    if not combos:
-        print(f"  No trf_coord checkpoints for {env_name}")
-        return
-
-    _, _, _, combo_dir = combos[0]
-    ckpts = list((combo_dir / "seed_0" / "checkpoints").glob("*.pt"))
-    if not ckpts:
-        print(f"  No checkpoints found in {combo_dir}")
-        return
-
-    ckpt_path = ckpts[-1]  # latest checkpoint
-    print(f"  Loading checkpoint: {ckpt_path}")
-
+    """Plot adjacency heatmap and per-layer attention from a trained trf_coord agent."""
     try:
         import torch
         sys.path.insert(0, str(Path(__file__).parent.parent))
-        from agents.trf_coord import TrfCoordAgent
+        from agents.trf_coord import TrfCoordAgent, CoordTransformerQ
         from env.road_graph import build_adjacency
 
+        combos = list_combos(results_dir, agent="trf_coord", env=env_name)
+        if not combos:
+            print(f"  No trf_coord checkpoints for {env_name}")
+            return
+        _, _, _, combo_dir = combos[0]
+        ckpts = sorted((combo_dir / "seed_0" / "checkpoints").glob("*.pt"))
+        if not ckpts:
+            print(f"  No checkpoints found in {combo_dir}")
+            return
+        ckpt_path = ckpts[-1]
+        print(f"  Loading: {ckpt_path}")
         ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
-        # Checkpoint contains {'model': state_dict, 'adj': ..., 'config': ...}
-        if isinstance(ckpt, dict) and 'adj' in ckpt:
-            adj = ckpt['adj']
-            nodes = sorted(adj.keys())
-            n = len(nodes)
-            # Build adjacency matrix
-            adj_matrix = np.zeros((n, n))
-            node_idx = {node: i for i, node in enumerate(nodes)}
-            for node, neighbors in adj.items():
-                for nb in neighbors:
-                    if nb in node_idx:
-                        adj_matrix[node_idx[node], node_idx[nb]] = 1
-                        adj_matrix[node_idx[nb], node_idx[node]] = 1
 
-            fig, ax = plt.subplots(1, 1, figsize=(8, 8))
-            im = ax.imshow(adj_matrix, cmap='YlOrRd', aspect='equal')
-            ax.set_xticks(range(n))
-            ax.set_yticks(range(n))
-            ax.set_xticklabels(nodes, rotation=90, fontsize=8)
-            ax.set_yticklabels(nodes, fontsize=8)
-            ax.set_title(f"Network Adjacency — {env_name}")
-            plt.colorbar(im, ax=ax)
+        adj = ckpt.get("adj", {})
+        config = ckpt.get("config", {})
+        nodes = sorted(adj.keys())
 
-            os.makedirs(save_dir, exist_ok=True)
-            fig.savefig(f"{save_dir}/attention_heatmap_{env_name}.pdf", bbox_inches="tight")
-            fig.savefig(f"{save_dir}/attention_heatmap_{env_name}.png", dpi=150, bbox_inches="tight")
-            plt.close(fig)
-            print(f"  Saved: {save_dir}/attention_heatmap_{env_name}.png")
+        # Fallback: build adjacency from net file if not in checkpoint
+        if not nodes:
+            print("  No adj in checkpoint — building from net file")
+            import xml.etree.ElementTree as ET
+            net_files = {
+                "grid4x4": "nets/RESCO/grid4x4/grid4x4.net.xml",
+                "cologne3": "nets/RESCO/cologne3/cologne3.net.xml",
+            }
+            net_path = net_files.get(env_name)
+            if net_path and Path(net_path).exists():
+                tree = ET.parse(net_path)
+                tls_ids = [j.get("id") for j in tree.findall(".//junction")
+                           if "traffic_light" in (j.get("type") or "")]
+                adj = build_adjacency(net_path, tls_ids)
+                nodes = sorted(adj.keys())
+            else:
+                print(f"  Can't find net file for {env_name}")
+                return
+        n = len(nodes)
+        node_idx = {node: i for i, node in enumerate(nodes)}
+
+        # 1. Adjacency matrix
+        adj_matrix = np.zeros((n, n))
+        for node, neighbors in adj.items():
+            for nb in neighbors:
+                if nb in node_idx:
+                    adj_matrix[node_idx[node], node_idx[nb]] = 1
+                    adj_matrix[node_idx[nb], node_idx[node]] = 1
+
+        os.makedirs(save_dir, exist_ok=True)
+
+        fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+        im = ax.imshow(adj_matrix, cmap='YlOrRd', aspect='equal', vmin=0, vmax=1)
+        ax.set_xticks(range(n))
+        ax.set_yticks(range(n))
+        ax.set_xticklabels(nodes, rotation=90, fontsize=8)
+        ax.set_yticklabels(nodes, fontsize=8)
+        ax.set_title(f"Network Adjacency — {env_name}")
+        plt.colorbar(im, ax=ax, ticks=[0, 1])
+        fig.savefig(f"{save_dir}/adjacency_{env_name}.pdf", bbox_inches="tight")
+        fig.savefig(f"{save_dir}/adjacency_{env_name}.png", dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        print(f"  Saved: {save_dir}/adjacency_{env_name}.png")
+
+        # 2. Attention heatmap — reconstruct agent and run forward pass
+        agent_id = ckpt.get("agent_id", nodes[0])
+        obs_dim = ckpt.get("obs_dim", 0)
+        act_dim = ckpt.get("act_dim", 0)
+
+        if adj and obs_dim and act_dim:
+            agent = TrfCoordAgent(
+                obs_dim=obs_dim, act_dim=act_dim,
+                adj=adj, agent_id=agent_id,
+                embedding_dim=config.get("embedding_dim", 64),
+                num_heads=config.get("num_heads", 4),
+                num_enc_layers=config.get("num_enc_layers", 2),
+                lr=1e-4, gamma=0.99, tau=None,
+                target_update_interval=1000, buffer_size=1000, batch_size=32,
+                learning_starts=0, train_freq=1, device="cpu",
+            )
+            agent.online_net.load_state_dict(ckpt["online_net"])
+            agent.online_net.eval()
+
+            # Create fake tokens: own obs + neighbours
+            fake_obs = {node: np.random.randn(obs_dim).astype(np.float32) for node in nodes}
+            tokens = agent._build_tokens(fake_obs)
+            tokens_t = torch.tensor(tokens, dtype=torch.float32).unsqueeze(0)
+
+            with torch.no_grad():
+                _, attn_weights = agent.online_net.forward_with_attention(tokens_t)
+
+            # attn_weights: (1, n_layers, n_heads, seq_len, seq_len)
+            if attn_weights is not None:
+                attn = attn_weights.squeeze(0).numpy()  # (n_layers, n_heads, seq_len, seq_len)
+                n_layers, n_heads = attn.shape[0], attn.shape[1]
+
+                # Plot last layer, mean across heads
+                fig, axes = plt.subplots(1, min(n_heads, 4) + 1, figsize=(4 * (min(n_heads, 4) + 1), 6))
+                last_layer = attn[-1]  # (n_heads, seq_len, seq_len)
+
+                # Mean attention across heads
+                mean_attn = last_layer.mean(axis=0)
+                im = axes[0].imshow(mean_attn, cmap='Blues', aspect='equal')
+                axes[0].set_title("Mean Attention\n(last layer)")
+                axes[0].set_xlabel("Key")
+                axes[0].set_ylabel("Query")
+                plt.colorbar(im, ax=axes[0])
+
+                # Per-head
+                for h in range(min(n_heads, 4)):
+                    im = axes[h + 1].imshow(last_layer[h], cmap='Blues', aspect='equal')
+                    axes[h + 1].set_title(f"Head {h}")
+                    axes[h + 1].set_xlabel("Key")
+                    plt.colorbar(im, ax=axes[h + 1])
+
+                fig.suptitle(f"Attention Weights — {env_name} / {agent_id} (last layer)", y=1.02)
+                fig.savefig(f"{save_dir}/attention_heatmap_{env_name}.pdf", bbox_inches="tight")
+                fig.savefig(f"{save_dir}/attention_heatmap_{env_name}.png", dpi=150, bbox_inches="tight")
+                plt.close(fig)
+                print(f"  Saved: {save_dir}/attention_heatmap_{env_name}.png")
+            else:
+                print(f"  No attention weights in checkpoint")
         else:
-            print(f"  Checkpoint doesn't contain adjacency graph")
+            print(f"  Checkpoint missing adj/obs_dim/act_dim — retrain with updated save()")
     except Exception as e:
         print(f"  Error generating attention heatmap: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 # ---------------------------------------------------------------------------
