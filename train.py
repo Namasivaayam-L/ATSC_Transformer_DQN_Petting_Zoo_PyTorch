@@ -327,7 +327,9 @@ def _mean_metrics(metrics: List[EpisodeMetrics]) -> EpisodeMetrics:
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: DictConfig) -> None:
-    run_dir = os.path.join(os.getcwd(), f"{cfg.agent.name}_{cfg.env.scenario}_{cfg.reward.name}")
+    run_dir = cfg.get("run_dir", None)
+    if run_dir is None:
+        run_dir = os.path.join(os.getcwd(), f"{cfg.agent.name}_{cfg.env.scenario}_{cfg.reward.name}")
     cfg.run_dir = run_dir
     os.makedirs(run_dir, exist_ok=True)
     print("[train] resolved config:\n", OmegaConf.to_yaml(cfg), flush=True)

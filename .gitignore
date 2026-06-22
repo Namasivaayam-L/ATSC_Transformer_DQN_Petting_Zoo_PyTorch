@@ -3,8 +3,11 @@ results/tb/
 results/*/*/*/tb/
 results/*/*/*/seed_*/
 results/*/*/*/checkpoints/
+results_v2/
+outputs/
 nets
 sumo_rl.egg-info/
 __pycache__
+*.pyc
 .venv
 test

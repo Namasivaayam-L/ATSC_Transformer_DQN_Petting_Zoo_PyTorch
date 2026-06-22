@@ -39,16 +39,18 @@ class MaxPressureAgent:
             self._phase_green_lanes.append(green_indices)
 
     def act(self, obs: np.ndarray, **_kwargs) -> int:
-        """Choose the phase with the highest total waiting time on green lanes."""
-        # obs shape: (n_lanes, 80) — per-vehicle accumulated waiting times
+        """Choose the phase with the highest total vehicle count on green lanes.
+
+        obs shape: (n_lanes, 2) — [vehicle_count, waiting_time] per incoming lane.
+        MaxPressure uses vehicle counts (column 0) per Varaiya 2013.
+        """
         best_phase = 0
         best_pressure = -1.0
         for p in range(self.n_phases):
             green_idx = self._phase_green_lanes[p]
             if not green_idx:
                 continue
-            # Sum all waiting times on green lanes (non-zero entries)
-            pressure = float(obs[green_idx].sum())
+            pressure = float(obs[green_idx, 0].sum())
             if pressure > best_pressure:
                 best_pressure = pressure
                 best_phase = p
