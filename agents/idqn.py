@@ -158,15 +158,21 @@ class IDQNAgent:
 
     # -- action selection (exploitation + exploration) ----------------------
 
-    def act(self, obs: np.ndarray, epsilon: Optional[float] = None) -> int:
+    def act(self, obs: np.ndarray, epsilon: Optional[float] = None,
+            valid_actions: Optional[int] = None) -> int:
         """Epsilon-greedy action selection."""
         if epsilon is None:
             epsilon = self.epsilon
         if random.random() < epsilon:
-            return random.randrange(self.act_dim)
+            n = valid_actions if valid_actions is not None else self.act_dim
+            return random.randrange(n)
         with torch.no_grad():
             obs_t = torch.as_tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)
             q = self.online_net(obs_t)
+            if valid_actions is not None and valid_actions < self.act_dim:
+                mask = torch.full_like(q, float("-inf"))
+                mask[:, :valid_actions] = 0
+                q = q + mask
             return int(q.argmax(dim=-1).item())
 
     # -- learning -----------------------------------------------------------

@@ -1,0 +1,11 @@
+# RESCO cologne8 — 8 traffic-signal agents, real Cologne topology.
+# Larger than cologne3; tests transformer coordination at scale.
+
+scenario: cologne8
+net_file: null
+route_file: null
+additional_sumo_cmd: null
+use_gui: false
+
+num_episodes: 30
+num_seconds: 3600

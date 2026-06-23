@@ -270,16 +270,27 @@ class TrfCoordAgent:
             tokens[1 + i, :len(n_obs)] = n_obs[:self.obs_dim]
         return tokens
 
-    def act(self, obs_dict: Dict[str, np.ndarray], epsilon: Optional[float] = None) -> int:
-        """Epsilon-greedy action selection from tokenised observations."""
+    def act(self, obs_dict: Dict[str, np.ndarray], epsilon: Optional[float] = None,
+            valid_actions: Optional[int] = None) -> int:
+        """Epsilon-greedy action selection from tokenised observations.
+
+        Args:
+            valid_actions: if set, mask Q-values beyond this count (for
+            heterogeneous action spaces like cologne8).
+        """
         if epsilon is None:
             epsilon = self.epsilon
         if random.random() < epsilon:
-            return random.randrange(self.act_dim)
+            n = valid_actions if valid_actions is not None else self.act_dim
+            return random.randrange(n)
         tokens = self._build_tokens(obs_dict)
         with torch.no_grad():
             tokens_t = torch.as_tensor(tokens, dtype=torch.float32, device=self.device).unsqueeze(0)
             q = self.online_net(tokens_t)
+            if valid_actions is not None and valid_actions < self.act_dim:
+                mask = torch.full_like(q, float("-inf"))
+                mask[:, :valid_actions] = 0
+                q = q + mask
             return int(q.argmax(dim=-1).item())
 
     def learn(self) -> Optional[float]:

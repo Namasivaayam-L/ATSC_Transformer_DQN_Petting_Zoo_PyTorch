@@ -159,17 +159,17 @@ def _create_agents(
 
 
 def _select_action(agent: AgentType, obs_dict: Dict[str, np.ndarray], ts: str,
-                   sim_time: float = 0.0) -> int:
+                   sim_time: float = 0.0, act_dim: int = 0) -> int:
     """Select action — handle flat (IDQN), tokenised (trf_coord), and baseline agents."""
     if isinstance(agent, TrfCoordAgent):
-        return agent.act(obs_dict)
+        return agent.act(obs_dict, valid_actions=act_dim)
     elif isinstance(agent, (MaxPressureAgent, MPLightAgent, FixedTimeAgent)):
         return agent.act(obs_dict[ts], sim_time=sim_time)
     else:
         flat = np.zeros(agent.obs_dim, dtype=np.float32)
         obs_flat = obs_dict[ts].flatten().astype(np.float32)
         flat[:len(obs_flat)] = obs_flat[:agent.obs_dim]
-        return agent.act(flat)
+        return agent.act(flat, valid_actions=act_dim)
 
 
 def _store_transition(
@@ -208,7 +208,7 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
     sample_obs_dict, _ = env.reset()
     # Use max obs_dim across all agents (cologne3 has heterogeneous lane counts)
     obs_dim = max(int(np.prod(sample_obs_dict[ts].shape)) for ts in possible_agents)
-    act_dim = int(env.action_spaces[possible_agents[0]].n)
+    act_dim = max(int(env.action_spaces[ts].n) for ts in possible_agents)
 
     # Build adjacency graph for transformer agents (without closing env)
     adj: Dict[str, List[str]] = {}
@@ -231,10 +231,10 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
     print(f"[train] Using device: {device}")
 
     if agent_name == "fixed_time":
-        from eval.evaluate import RuleBasedAgent
         u = env.unwrapped.env
-        n_phases = u.traffic_signals[possible_agents[0]].num_green_phases
-        agents = {ts: FixedTimeAgent(n_phases=n_phases, cycle_seconds=cfg.agent.get("cycle_seconds", 30))
+        agents = {ts: FixedTimeAgent(
+                    n_phases=u.traffic_signals[ts].num_green_phases,
+                    cycle_seconds=cfg.agent.get("cycle_seconds", 30))
                   for ts in possible_agents}
     elif agent_name in ("max_pressure", "mplight"):
         from baselines.max_pressure import MaxPressureAgent
@@ -258,7 +258,8 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
             actions = {}
             sim_time = env.unwrapped.env.traffic_signals[possible_agents[0]].sumo.simulation.getTime()
             for ts in possible_agents:
-                actions[ts] = _select_action(agents[ts], obs_dict, ts, sim_time=sim_time)
+                ts_act_dim = int(env.action_spaces[ts].n)
+                actions[ts] = _select_action(agents[ts], obs_dict, ts, sim_time=sim_time, act_dim=ts_act_dim)
 
             result = env.step(actions)
             if len(result) == 5:
