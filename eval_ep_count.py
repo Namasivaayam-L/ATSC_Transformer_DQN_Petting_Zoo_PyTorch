@@ -1,0 +1,304 @@
+"""eval_ep_count.py — Analyze episode count convergence study results.
+
+Reads all results_ep_count/{agent}_{env}_dwt_eps{count}/aggregate.json files.
+For each combo, extracts per-seed final metrics and per-episode CSV learning curves.
+Outputs convergence analysis JSON and plots.
+
+Usage:
+    python eval_ep_count.py <results_dir> <output_dir>
+
+Example:
+    python eval_ep_count.py results_ep_count/ results_ep_count/eval/
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+EP_COUNTS = [50, 100, 200, 400, 500]
+AGENTS = ["trf_coord", "trf_coord_equal"]
+ENVS = ["grid4x4", "cologne3", "cologne8", "ingolstadt7", "ingolstadt21"]
+METRICS = ["avg_travel_time", "avg_waiting_time", "mean_queue_length", "throughput"]
+
+
+def load_aggregate(results_dir: Path, agent: str, env: str, eps: int) -> Optional[Dict]:
+    tag = f"{agent}_{env}_dwt_eps{eps}"
+    agg_path = results_dir / tag / "aggregate.json"
+    if not agg_path.exists():
+        return None
+    with open(agg_path) as f:
+        return json.load(f)
+
+
+def load_per_episode_csv(results_dir: Path, agent: str, env: str, eps: int,
+                         metric: str = "system_total_waiting_time") -> List[List[float]]:
+    """Load per-episode values from CSV files across all seeds.
+
+    Returns list of lists: outer=seeds, inner=episodes.
+    """
+    tag = f"{agent}_{env}_dwt_eps{eps}"
+    combo_dir = results_dir / tag
+    all_seeds = []
+    if not combo_dir.exists():
+        return all_seeds
+    for seed_dir in sorted(combo_dir.glob("seed_*")):
+        csvs = sorted(seed_dir.glob("csv*ep.csv"))
+        vals = []
+        for csv_path in csvs:
+            try:
+                import csv as csv_mod
+                with open(csv_path) as f:
+                    reader = csv_mod.DictReader(f)
+                    rows = list(reader)
+                    if rows and metric in rows[-1]:
+                        vals.append(float(rows[-1][metric]))
+            except Exception:
+                pass
+        if vals:
+            all_seeds.append(vals)
+    return all_seeds
+
+
+def compute_convergence_metrics(seed_data: List[List[float]]) -> Dict:
+    """Compute convergence metrics from per-episode seed data."""
+    if not seed_data:
+        return {"final_10_mean": None, "final_10_ci95": None,
+                "convergence_ep": None, "marginal_gains": []}
+
+    max_len = max(len(d) for d in seed_data)
+    padded = np.full((len(seed_data), max_len), np.nan)
+    for i, d in enumerate(seed_data):
+        padded[i, :len(d)] = d
+
+    means = np.nanmean(padded, axis=0)
+    ci95 = 1.96 * np.nanstd(padded, axis=0) / np.sqrt(np.sum(~np.isnan(padded), axis=0))
+
+    last_10 = means[-10:]
+    last_10_clean = last_10[~np.isnan(last_10)]
+    final_mean = float(np.mean(last_10_clean)) if len(last_10_clean) > 0 else None
+    final_ci = float(1.96 * np.std(last_10_clean) / np.sqrt(len(last_10_clean))) if len(last_10_clean) > 1 else None
+
+    conv_ep = None
+    if final_mean is not None and final_mean != 0:
+        threshold = final_mean * 1.05
+        for i, m in enumerate(means):
+            if not np.isnan(m) and m <= threshold:
+                conv_ep = i
+                break
+
+    marginal = []
+    window = 10
+    for i in range(0, max_len - window, window):
+        block = means[i:i + window]
+        block_clean = block[~np.isnan(block)]
+        if len(block_clean) >= 3:
+            marginal.append((i + window, float(np.mean(block_clean))))
+    marginal_gains = []
+    for j in range(1, len(marginal)):
+        eps_prev, val_prev = marginal[j - 1]
+        eps_curr, val_curr = marginal[j]
+        if val_prev != 0:
+            gain = (val_prev - val_curr) / (eps_curr - eps_prev)
+            marginal_gains.append({"episodes": eps_curr, "gain_per_ep": gain})
+
+    return {
+        "final_10_mean": final_mean,
+        "final_10_ci95": final_ci,
+        "convergence_ep": conv_ep,
+        "marginal_gains": marginal_gains,
+        "per_episode_means": means.tolist(),
+        "per_episode_ci95": ci95.tolist(),
+    }
+
+
+def find_optimal_epcount(analysis: Dict) -> int:
+    """Find optimal episode count using marginal improvement analysis."""
+    ep_data = {}
+    for eps in EP_COUNTS:
+        if str(eps) in analysis and analysis[str(eps)].get("final_10_mean") is not None:
+            ep_data[eps] = analysis[str(eps)]["final_10_mean"]
+
+    if len(ep_data) < 2:
+        return 50
+
+    sorted_eps = sorted(ep_data.keys())
+    best = sorted_eps[0]
+    for i in range(len(sorted_eps) - 1):
+        curr_ep = sorted_eps[i]
+        next_ep = sorted_eps[i + 1]
+        curr_val = ep_data[curr_ep]
+        next_val = ep_data[next_ep]
+        if next_val != 0:
+            ratio = curr_val / next_val
+            if ratio <= 1.05:
+                return curr_ep
+        best = curr_ep
+
+    return best
+
+
+def plot_convergence_curves(results_dir: Path, output_dir: Path, env: str):
+    """Plot overlaid learning curves across episode counts for each agent."""
+    for agent in AGENTS:
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+        colors = plt.cm.viridis(np.linspace(0.2, 0.9, len(EP_COUNTS)))
+
+        for idx, metric in enumerate(["system_total_waiting_time", "system_total_travel_time",
+                                       "system_mean_speed", "system_stopped_vehicles"]):
+            ax = axes[idx // 2][idx % 2]
+            for ci, eps in enumerate(EP_COUNTS):
+                seed_data = load_per_episode_csv(results_dir, agent, env, eps, metric)
+                if not seed_data:
+                    continue
+                max_len = max(len(d) for d in seed_data)
+                padded = np.full((len(seed_data), max_len), np.nan)
+                for i, d in enumerate(seed_data):
+                    padded[i, :len(d)] = d
+                means = np.nanmean(padded, axis=0)
+                ci95 = 1.96 * np.nanstd(padded, axis=0) / np.sqrt(np.sum(~np.isnan(padded), axis=0))
+                x = np.arange(len(means))
+                ax.plot(x, means, label=f"eps={eps}", color=colors[ci], linewidth=2)
+                ax.fill_between(x, means - ci95, means + ci95, alpha=0.15, color=colors[ci])
+
+            ax.set_xlabel("Episode")
+            ax.set_ylabel(metric.replace("_", " ").title())
+            ax.set_title(f"{metric.replace('_', ' ').title()}")
+            ax.legend(fontsize=9)
+            ax.grid(True, alpha=0.3)
+
+        fig.suptitle(f"Convergence Curves — {agent} / {env}", fontsize=14, y=1.01)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(output_dir / f"convergence_curves_{env}_{agent}.png",
+                    dpi=150, bbox_inches="tight")
+        fig.savefig(output_dir / f"convergence_curves_{env}_{agent}.pdf",
+                    bbox_inches="tight")
+        plt.close(fig)
+        print(f"  Saved: convergence_curves_{env}_{agent}.png")
+
+
+def plot_final_performance(results_dir: Path, output_dir: Path, env: str,
+                           baseline_data: Optional[Dict] = None):
+    """Bar chart: final 10-ep mean travel time for each ep count x agent."""
+    fig, ax = plt.subplots(1, 1, figsize=(12, 7))
+    n_agents = len(AGENTS)
+    n_eps = len(EP_COUNTS)
+    width = 0.8 / (n_agents + (1 if baseline_data else 0))
+
+    for ai, agent in enumerate(AGENTS):
+        means = []
+        cis = []
+        for eps in EP_COUNTS:
+            agg = load_aggregate(results_dir, agent, env, eps)
+            if agg and "aggregate" in agg:
+                tt = agg["aggregate"].get("avg_travel_time", {})
+                means.append(tt.get("mean", 0))
+                cis.append((tt.get("hi", 0) - tt.get("lo", 0)) / 2)
+            else:
+                means.append(0)
+                cis.append(0)
+        x = np.arange(n_eps) + ai * width
+        ax.bar(x, means, width * 0.9, yerr=cis, label=agent, alpha=0.85, capsize=4)
+
+    if baseline_data:
+        bi = n_agents
+        for bname, bval in baseline_data.items():
+            x = np.arange(n_eps) + bi * width
+            ax.bar(x, bval, width * 0.9, label=bname, alpha=0.6, capsize=4)
+            bi += 1
+
+    ax.set_xlabel("Episode Count")
+    ax.set_ylabel("Avg Travel Time (s) — lower is better")
+    ax.set_title(f"Final Performance vs Episode Count — {env}")
+    ax.set_xticks(np.arange(n_eps) + width * n_agents / 2)
+    ax.set_xticklabels([str(e) for e in EP_COUNTS])
+    ax.legend()
+    ax.grid(True, alpha=0.3, axis="y")
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_dir / f"final_performance_vs_epcount_{env}.png",
+                dpi=150, bbox_inches="tight")
+    fig.savefig(output_dir / f"final_performance_vs_epcount_{env}.pdf",
+                bbox_inches="tight")
+    plt.close(fig)
+    print(f"  Saved: final_performance_vs_epcount_{env}.png")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Episode count convergence analysis")
+    parser.add_argument("results_dir", help="Results directory (e.g. results_ep_count/)")
+    parser.add_argument("output_dir", help="Output directory for plots and analysis")
+    args = parser.parse_args()
+
+    results_dir = Path(args.results_dir)
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"Results: {results_dir}")
+    print(f"Output:  {output_dir}")
+
+    # 1. Compute convergence metrics
+    print("\n--- Computing convergence metrics ---")
+    analysis = {}
+    for env in ENVS:
+        analysis[env] = {}
+        for agent in AGENTS:
+            analysis[env][agent] = {}
+            for eps in EP_COUNTS:
+                seed_data = load_per_episode_csv(results_dir, agent, env, eps)
+                metrics = compute_convergence_metrics(seed_data)
+                analysis[env][agent][str(eps)] = metrics
+                if metrics["final_10_mean"] is not None:
+                    print(f"  {agent}/{env}/eps={eps}: "
+                          f"final_10_mean={metrics['final_10_mean']:.2f} "
+                          f"convergence_ep={metrics['convergence_ep']}")
+
+    # 2. Find optimal ep count per env x agent
+    print("\n--- Optimal episode counts ---")
+    optimal = {}
+    for env in ENVS:
+        optimal[env] = {}
+        for agent in AGENTS:
+            opt = find_optimal_epcount(analysis[env][agent])
+            optimal[env][agent] = opt
+            print(f"  {agent}/{env}: {opt} episodes")
+
+    analysis["optimal"] = optimal
+
+    # 3. Save analysis JSON
+    with open(output_dir / "convergence_analysis.json", "w") as f:
+        json.dump(analysis, f, indent=2, default=str)
+    print(f"\nSaved: convergence_analysis.json")
+
+    # 4. Generate plots
+    print("\n--- Generating plots ---")
+    for env in ENVS:
+        print(f"\n  {env}:")
+        plot_convergence_curves(results_dir, output_dir, env)
+        plot_final_performance(results_dir, output_dir, env)
+
+    # 5. Summary
+    with open(output_dir / "optimal_ep_count.txt", "w") as f:
+        f.write("Optimal Episode Counts\n")
+        f.write("=" * 50 + "\n\n")
+        for env in ENVS:
+            f.write(f"{env}:\n")
+            for agent in AGENTS:
+                f.write(f"  {agent}: {optimal[env][agent]} episodes\n")
+            f.write("\n")
+
+    print("\nSaved: optimal_ep_count.txt")
+    print("\nDone!")
+
+
+if __name__ == "__main__":
+    main()

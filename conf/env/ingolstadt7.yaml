@@ -1,0 +1,11 @@
+# RESCO ingolstadt7 — 7 traffic-signal agents, real Ingolstadt topology.
+# Intermediate scale between cologne8 (8) and ingolstadt21 (24).
+
+scenario: ingolstadt7
+net_file: null
+route_file: null
+additional_sumo_cmd: null
+use_gui: false
+
+num_episodes: 30
+num_seconds: 3600

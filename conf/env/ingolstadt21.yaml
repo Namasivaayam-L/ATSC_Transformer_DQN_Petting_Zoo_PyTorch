@@ -1,0 +1,11 @@
+# RESCO ingolstadt21 — 24 traffic-signal agents, real Ingolstadt topology.
+# Largest real-world network in RESCO benchmark.
+
+scenario: ingolstadt21
+net_file: null
+route_file: null
+additional_sumo_cmd: null
+use_gui: false
+
+num_episodes: 30
+num_seconds: 3600
