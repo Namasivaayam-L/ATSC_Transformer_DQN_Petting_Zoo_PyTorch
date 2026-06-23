@@ -62,7 +62,7 @@ for combo in "${COMBOS[@]}"; do
 
   CUDA_VISIBLE_DEVICES=0 $PYTHON train.py \
     agent="$agent" env="$env" reward="$reward" \
-    seeds=5 num_episodes=20 num_seconds=3600 device=cuda \
+    seeds=5 num_episodes=20 num_seconds=3600 device=cuda resume=true \
     run_dir="$rdir" \
     > "$logfile" 2>&1
 

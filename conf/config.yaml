@@ -19,6 +19,7 @@ run_dir: ${oc.env:RUN_DIR,outputs/${now:%Y-%m-%d_%H-%M-%S}}
 tracker: tensorboard            # 'tensorboard' (default, offline) | 'wandb'
 device: auto                    # 'auto' (use CUDA if available), 'cpu', 'cuda'
 wandb_project: traffic-sense-journal
+resume: true                    # resume from latest.pt checkpoint if it exists
 
 # SUMO / sim
 sumo_home: /usr/share/sumo

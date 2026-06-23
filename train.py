@@ -3,9 +3,12 @@
 Hydra-driven.  Fixes bug #1 (training cadence) by updating every `train_freq`
 env steps after `learning_starts`, NOT only at episode termination.
 
+Supports resume: saves a ``latest.pt`` checkpoint after every episode.
+On restart, training picks up from the last completed episode.
+
 Usage:
-    uv run python train.py agent=idqn   env=grid4x4 reward=dwt seed=0
-    uv run python train.py agent=trf_coord env=grid4x4 reward=dwt seed=0
+    uv run python train.py agent=idqn   env=grid4x4 reward=dwt seed=0 resume=true
+    uv run python train.py agent=trf_coord env=grid4x4 reward=dwt seed=0 resume=true
 """
 from __future__ import annotations
 
@@ -17,6 +20,7 @@ from typing import Any, Dict, List, Union
 
 import hydra
 import numpy as np
+import torch
 from omegaconf import DictConfig, OmegaConf
 
 _REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -82,6 +86,73 @@ def _log(tracker: dict, tag: str, value: float, step: int) -> None:
         tracker["writer"].add_scalar(tag, value, step)
     elif tracker["name"] == "wandb":
         tracker["wandb"].log({tag: value}, step=step)
+
+
+# ---------------------------------------------------------------------------
+# Checkpoint save / resume helpers
+# ---------------------------------------------------------------------------
+
+_LATEST_CKPT = "latest.pt"
+
+
+def _save_checkpoint(ckpt_dir: str, agents: Dict[str, AgentType],
+                     global_step: int, ep: int, seed: int,
+                     metrics_history: list) -> None:
+    """Save all agent states + training progress to ``latest.pt`` (overwrite)."""
+    agent_states = {}
+    for ts, agent in agents.items():
+        if isinstance(agent, _RL_AGENTS):
+            # IDQN / TrfCoord save method writes to a file; we inline the dict
+            # to keep everything in one checkpoint.
+            if isinstance(agent, IDQNAgent):
+                agent_states[ts] = {
+                    "online_net": agent.online_net.state_dict(),
+                    "target_net": agent.target_net.state_dict(),
+                    "optimizer": agent.optimizer.state_dict(),
+                    "update_count": agent._update_count,
+                    "episode_count": agent._episode_count,
+                }
+            elif isinstance(agent, TrfCoordAgent):
+                agent_states[ts] = {
+                    "online_net": agent.online_net.state_dict(),
+                    "target_net": agent.target_net.state_dict(),
+                    "optimizer": agent.optimizer.state_dict(),
+                    "update_count": agent._update_count,
+                    "episode_count": agent._episode_count,
+                }
+
+    ckpt = {
+        "agents": agent_states,
+        "global_step": global_step,
+        "next_episode": ep + 1,
+        "seed": seed,
+        "metrics_history": metrics_history,
+    }
+    path = os.path.join(ckpt_dir, _LATEST_CKPT)
+    torch.save(ckpt, path)
+
+
+def _load_checkpoint(ckpt_dir: str) -> dict | None:
+    """Load ``latest.pt`` if it exists, else return None."""
+    path = os.path.join(ckpt_dir, _LATEST_CKPT)
+    if not os.path.isfile(path):
+        return None
+    return torch.load(path, map_location="cpu", weights_only=False)
+
+
+def _restore_agents(ckpt: dict, agents: Dict[str, AgentType]) -> None:
+    """Restore agent weights from a checkpoint."""
+    agent_states = ckpt.get("agents", {})
+    for ts, state in agent_states.items():
+        if ts not in agents:
+            continue
+        agent = agents[ts]
+        if isinstance(agent, IDQNAgent) or isinstance(agent, TrfCoordAgent):
+            agent.online_net.load_state_dict(state["online_net"])
+            agent.target_net.load_state_dict(state["target_net"])
+            agent.optimizer.load_state_dict(state["optimizer"])
+            agent._update_count = state.get("update_count", 0)
+            agent._episode_count = state.get("episode_count", 0)
 
 
 def _build_env(cfg: DictConfig, output_dir: str, seed: int):
@@ -244,10 +315,26 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
         agents = {ts: AgentCls(traffic_signal=u.traffic_signals[ts]) for ts in possible_agents}
     else:
         agents = _create_agents(cfg, possible_agents, obs_dim, act_dim, adj, device=device)
-    global_step = 0
-    ep_metrics: List[EpisodeMetrics] = []
 
-    for ep in range(int(cfg.num_episodes)):
+    # ---- Resume from checkpoint ----
+    resume = cfg.get("resume", False)
+    start_ep = 0
+    global_step = 0
+    metrics_history: list = []
+    if resume:
+        ckpt = _load_checkpoint(ckpt_dir)
+        if ckpt is not None:
+            _restore_agents(ckpt, agents)
+            start_ep = ckpt.get("next_episode", 0)
+            global_step = ckpt.get("global_step", 0)
+            metrics_history = ckpt.get("metrics_history", [])
+            print(f"[train] Resumed from checkpoint: episode {start_ep}, "
+                  f"global_step {global_step}", flush=True)
+
+    ep_metrics: List[EpisodeMetrics] = []
+    num_episodes = int(cfg.num_episodes)
+
+    for ep in range(start_ep, num_episodes):
         obs_dict, _info = env.reset()
         done = False
         ep_reward = 0.0
@@ -301,13 +388,20 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
         print(f"  ep {ep:>4d} | reward {ep_reward:>8.1f} | loss {avg_loss:.4f}"
               f"{eps_str} | updates {ep_updates}", flush=True)
 
-        save_interval = cfg.get("save_interval", 50)
-        if (ep + 1) % save_interval == 0 or ep == cfg.num_episodes - 1:
-            for ts in possible_agents:
-                agents[ts].save(os.path.join(ckpt_dir, f"{ts}_ep{ep}.pt"))
-
+        # Build episode metrics
         ep_m = build_episode_metrics(out_dir)
+        metrics_history.append(asdict(ep_m))
         ep_metrics.append(ep_m)
+
+        # ---- Save checkpoint every episode (overwrite) ----
+        _save_checkpoint(ckpt_dir, agents, global_step, ep, seed, metrics_history)
+
+        # ---- Also save periodic named checkpoint ----
+        save_interval = cfg.get("save_interval", 50)
+        if (ep + 1) % save_interval == 0:
+            for ts in possible_agents:
+                if isinstance(agents[ts], _RL_AGENTS):
+                    agents[ts].save(os.path.join(ckpt_dir, f"{ts}_ep{ep}.pt"))
 
     env.close()
     for t in tracker.values():
@@ -335,14 +429,43 @@ def main(cfg: DictConfig) -> None:
     os.makedirs(run_dir, exist_ok=True)
     print("[train] resolved config:\n", OmegaConf.to_yaml(cfg), flush=True)
 
+    resume = cfg.get("resume", False)
     seeds = list(range(int(cfg.seeds)))
+    done_path = os.path.join(run_dir, "seeds_done.json")
+
+    # Load seed progress for resume
+    done_seeds: list = []
+    if resume and os.path.isfile(done_path):
+        with open(done_path) as f:
+            done_seeds = json.load(f).get("done", [])
+        print(f"[train] Resume: {len(done_seeds)} seeds already completed", flush=True)
+
     per_seed: List[EpisodeMetrics] = []
     for s in seeds:
+        seed_dir = os.path.join(run_dir, f"seed_{s}")
+
+        if s in done_seeds:
+            print(f"\n[train] ===== seed {s} — SKIPPED (already done) =====", flush=True)
+            agg_file = os.path.join(seed_dir, "aggregate_seed.json")
+            if os.path.isfile(agg_file):
+                with open(agg_file) as f:
+                    d = json.load(f)
+                per_seed.append(EpisodeMetrics(**d))
+            continue
+
         print(f"\n[train] ===== seed {s} =====", flush=True)
         m = train_one_seed(cfg, s, run_root=cfg.run_dir)
         per_seed.append(m)
         print(f"[train] seed {s}: travel_time={m.avg_travel_time:.2f}s, "
               f"wait={m.avg_waiting_time:.2f}s, throughput={int(m.throughput)}", flush=True)
+
+        # Save per-seed metric and update done list
+        os.makedirs(seed_dir, exist_ok=True)
+        with open(os.path.join(seed_dir, "aggregate_seed.json"), "w") as f:
+            json.dump(asdict(m), f, indent=2)
+        done_seeds.append(s)
+        with open(done_path, "w") as f:
+            json.dump({"done": done_seeds}, f)
 
     agg = aggregate_over_seeds(per_seed)
     with open(os.path.join(cfg.run_dir, "aggregate.json"), "w") as f:
