@@ -65,11 +65,11 @@ for combo in "${COMBOS[@]}"; do
   echo "[RUN] $tag — $(date '+%H:%M:%S') [$((COMPLETED+1))/$TOTAL]"
   t0=$SECONDS
 
-  # 20 episodes for speed; RL learning curves still meaningful
+  # 100 episodes (RESCO benchmark standard for DQN-based methods)
   # resume=true: picks up from latest.pt if it exists
   CUDA_VISIBLE_DEVICES=0 $PYTHON train.py \
     agent="$agent" env="$env" reward="$reward" \
-    seeds=5 num_episodes=20 device=cuda resume=true \
+    seeds=5 num_episodes=100 device=cuda resume=true \
     run_dir="$rdir" \
     > "$logfile" 2>&1
 

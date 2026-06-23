@@ -32,7 +32,7 @@ max_green: 60
 single_agent: false            # grid4x4 = 16 agents, cologne3 = 3
 
 # Training (Phase 1+)
-num_episodes: 50                # overridden per-phase
+num_episodes: 100               # RESCO benchmark: 100 eps for DQN-based methods
 learning_starts: 1000
 train_freq: 4                   # gradient updates every N env steps (bug #1 fix)
 batch_size: 64
