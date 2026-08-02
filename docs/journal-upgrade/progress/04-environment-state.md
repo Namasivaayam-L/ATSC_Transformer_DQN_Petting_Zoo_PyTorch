@@ -3,7 +3,7 @@
 Tracks what's installed, configured, and any environment-specific notes. Update this whenever
 you install packages, change configs, or discover environment quirks.
 
-> **Last updated:** 2026-06-16 11:30 +05:30 — Session #5
+> **Last updated:** 2026-06-26 12:00 +05:30 — Session #6
 
 ---
 
@@ -15,7 +15,7 @@ you install packages, change configs, or discover environment quirks.
 ## Repo location
 - **Path:** `/home/namachu/Documents/personal/ATSC_Transformer_DQN_Petting_Zoo_PyTorch`
 - **Journal-upgrade dir:** `./journal-upgrade/`
-- **Current branch:** `journal-upgrade-phases-0-2`
+- **Current branch:** `journal-upgrade-phases-0-2` (plus ep count study files untracked)
 
 ## SUMO
 - **Status:** ✅ Verified working
@@ -51,6 +51,12 @@ you install packages, change configs, or discover environment quirks.
 | `nets/RESCO/` | ✅ External | Downloaded from GitHub, NOT tracked in git |
 | `figures/` | ✅ Committed | `make_figures.py` — regenerates all figures/tables |
 | `paper/` | 🔴 Not created | Phase 5 |
+| `run_ep_count.sh` | ⚡ Untracked | Sequential episode count study runner |
+| `run_ep_count_parallel.sh` | ⚡ Untracked | Parallel episode count study runner (MAX_PARALLEL=8) |
+| `eval_ep_count.py` | ⚡ Untracked | Episode count convergence analysis + plots |
+| `results_ep_count/` | ⚡ Untracked | Study output (large, ~500MB+), DO NOT commit to git |
+| `run_ep_count_nohup.log` | ⚡ Untracked | Sequential run log |
+| `run_ep_count_parallel_nohup.log` | ⚡ Untracked | Parallel run log |
 
 ## Known gotchas
 1. ✅ **Observation shape**: Space says `(5,)` but actual obs is `(12, 80)` = 960 dims. Use `env.reset()` output, not `observation_spaces`.
@@ -64,7 +70,10 @@ you install packages, change configs, or discover environment quirks.
 9. ✅ **Target network**: Separate target net with hard update every `target_update_interval` steps. Optional Polyak averaging via `tau` config.
 10. ✅ **Buffer size check**: Both agents check `max(learning_starts, batch_size)` before sampling, preventing batch-size-greater-than-buffer crashes.
 11. ✅ **`setsid` for background training**: opencode bash tool sends SIGTERM on timeout. Use `setsid` not `nohup` for fully detached background processes.
-12. ✅ **Max 4 concurrent SUMO instances**: 5+ causes "peer shutdown" errors on GTX 1650 / 22GB RAM machine.
+12. ✅ **Max 8 concurrent SUMO instances (REVISED)**: Original assumption said max 4, but testing shows SUMO port conflicts don't exist — each instance gets its own random TCP port. 8 jobs run fine on GTX 1650 / 22GB RAM at ~1200 MiB GPU.
 13. ✅ **Heterogeneous obs padding**: cologne3 has agents with 5/6/8 lanes. Pad all obs to max (640-dim) with zeros.
 14. ✅ **MPLight simplified**: Compute pressure from obs vector only, no SUMO API calls (avoids TraCI errors with parallel envs).
 15. ✅ **`find_csv` returns last episode**: First episode CSV has all zeros (simulation startup). Always use last for metrics.
+16. ✅ **Ep count study timing**: grid4x4 eps=50 ~82 min, cologne3 eps=50 ~27 min, cologne3/8 eps=200 ~50 min, ingolstadt21 eps=50 ~111 min, cologne8 eps=100 ~14.4h. Larger × more eps scales ~linearly.
+17. ✅ **Resume robust**: `train.py` saves `latest.pt` per seed and `seeds_done.json`. Re-running automatically skips completed seeds. Safe to kill at any time.
+18. ✅ **`run_ep_count_parallel.sh` uses bash job queue**: Launches up to MAX_PARALLEL (default 8) combos in background, tracks PIDs, waits for completion. Handles resume automatically, skips combos with 5-seed `aggregate.json`.

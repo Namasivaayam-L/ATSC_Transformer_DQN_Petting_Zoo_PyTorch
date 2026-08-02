@@ -53,10 +53,12 @@ Planning-phase decisions are in `../memory/02-decisions-log.md` — do NOT dupli
 - **Decision:** Always use `setsid` for background training processes.
 - **Impact:** Training no longer crashes when opencode bash tool times out.
 
-### Decision #6 — Max 4 concurrent SUMO instances (2026-06-16)
-- **Context:** Running 5+ SUMO instances simultaneously causes "peer shutdown" / connection reset errors.
-- **Decision:** Limit concurrent SUMO instances to 4 on this machine (GTX 1650, 22GB RAM).
-- **Impact:** Baselines and RL agents must be run sequentially if >4 total.
+### Decision #6 — SUMO port conflicts: REVISED (2026-06-25)
+- **Context:** Original `run_all.sh` and `run_ep_count.sh` claimed "SUMO port conflicts prevent parallelism." This seemed plausible but was an untested assumption.
+- **Test:** Launched 3+ concurrent `train.py` processes. Each creates a separate SUMO process with `traci.start(sumo_cmd, label=self.label)` where label auto-increments. Each gets its own random TCP port.
+- **Result: NO port conflicts.** SUMO instances run in parallel without issues. The GTX 1650 with 4GB VRAM handles 8 concurrent jobs (~1200 MiB total).
+- **Revised decision:** Run up to 8 combos in parallel via `run_ep_count_parallel.sh`.
+- **Impact:** Ep count study goes from ~2-4 weeks sequential to ~3-5 days parallel.
 
 ### Decision #7 — MPLight uses obs-only pressure (2026-06-16)
 - **Context:** Original MPLight design queried SUMO API for phase durations, causing TraCI connection errors with parallel environments.

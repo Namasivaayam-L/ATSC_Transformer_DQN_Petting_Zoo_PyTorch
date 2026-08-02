@@ -1,0 +1,23 @@
+Optimal Episode Counts
+==================================================
+
+grid4x4:
+  trf_coord: 50 episodes
+  trf_coord_equal: 50 episodes
+
+cologne3:
+  trf_coord: 200 episodes
+  trf_coord_equal: 50 episodes
+
+cologne8:
+  trf_coord: 50 episodes
+  trf_coord_equal: 50 episodes
+
+ingolstadt7:
+  trf_coord: 100 episodes
+  trf_coord_equal: 100 episodes
+
+ingolstadt21:
+  trf_coord: 400 episodes
+  trf_coord_equal: 400 episodes
+

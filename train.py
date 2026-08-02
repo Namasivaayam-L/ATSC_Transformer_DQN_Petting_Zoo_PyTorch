@@ -334,6 +334,10 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
     ep_metrics: List[EpisodeMetrics] = []
     num_episodes = int(cfg.num_episodes)
 
+    # Real-time progress log (one JSON line per episode)
+    progress_path = os.path.join(out_dir, f"progress_seed{seed}.jsonl")
+    progress_f = open(progress_path, "a")
+
     for ep in range(start_ep, num_episodes):
         obs_dict, _info = env.reset()
         done = False
@@ -393,16 +397,35 @@ def train_one_seed(cfg: DictConfig, seed: int, run_root: str) -> EpisodeMetrics:
         metrics_history.append(asdict(ep_m))
         ep_metrics.append(ep_m)
 
+        # Write real-time progress
+        eps_val = agents[possible_agents[0]].epsilon if isinstance(agents[possible_agents[0]], _RL_AGENTS) else 0
+        progress_f.write(json.dumps({
+            "ep": ep, "tt": ep_m.avg_travel_time, "awt": ep_m.avg_waiting_time,
+            "reward": round(ep_reward, 2), "loss": round(avg_loss, 4),
+            "eps": round(eps_val, 4), "updates": ep_updates,
+            "queue": round(ep_m.mean_queue_length, 2), "tp": ep_m.throughput
+        }) + "\n")
+        progress_f.flush()
+
         # ---- Save checkpoint every episode (overwrite) ----
         _save_checkpoint(ckpt_dir, agents, global_step, ep, seed, metrics_history)
 
-        # ---- Also save periodic named checkpoint ----
-        save_interval = cfg.get("save_interval", 50)
-        if (ep + 1) % save_interval == 0:
+        # ---- Backup checkpoint every 5 eps, keep last 3 ----
+        BACKUP_INTERVAL = 5
+        MAX_BACKUPS = 3
+        if (ep + 1) % BACKUP_INTERVAL == 0:
             for ts in possible_agents:
                 if isinstance(agents[ts], _RL_AGENTS):
                     agents[ts].save(os.path.join(ckpt_dir, f"{ts}_ep{ep}.pt"))
+            # Clean old backups: keep only last MAX_BACKUPS
+            import glob as _glob
+            for ts in possible_agents:
+                backups = sorted(_glob.glob(os.path.join(ckpt_dir, f"{ts}_ep*.pt")),
+                                 key=lambda p: int(p.split("_ep")[-1].split(".")[0]))
+                while len(backups) > MAX_BACKUPS:
+                    os.remove(backups.pop(0))
 
+    progress_f.close()
     env.close()
     for t in tracker.values():
         if hasattr(t, "close"):

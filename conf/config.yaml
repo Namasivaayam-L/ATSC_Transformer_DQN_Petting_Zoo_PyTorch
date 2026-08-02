@@ -42,6 +42,7 @@ buffer_size: 50000
 target_update_interval: 1000    # hard update of target net (bug #3 fix)
 tau: null                       # if set, uses Polyak averaging instead of hard update
 dueling: false                  # optional Dueling head (Phase 1 stretch)
+save_interval: 1                # save checkpoint every episode
 
 # Eval (Phase 0 gate)
 eval_episodes: 1                # one episode per seed; aggregated across seeds

@@ -50,8 +50,16 @@ the chronological history of what was done and by whom (which session).
 - grid4x4 full results: 2026-06-15
 - cologne3 full results: 2026-06-16
 
-## Current Training Status (2026-06-16 11:30 IST)
-- **All experiments complete**: 5 methods × 2 scenarios × 5 seeds × 200 episodes
-- **grid4x4 results**: IDQN (35.0s), TrfCoord (35.5s), MaxPressure (20.0s), MPLight (20.0s), FixedTime (792.5s)
-- **cologne3 results**: IDQN (14.6s), TrfCoord (14.1s), MaxPressure (480.1s), MPLight (480.1s), FixedTime (778.6s)
-- **Next**: Reward sweep, equal-param ablation, figure generation
+## Current Training Status (2026-06-29)
+- **Phases 0–3 COMPLETE**: 5 methods × 2 scenarios × 5 seeds × 200 episodes
+- **Active**: Episode Count Convergence Study — 35/50 combos verified clean
+- **Ep count study status**: eps=50,100,200 all done (20/20). eps=400: 4/10 done, 6 running. eps=500: 0/10 done, 4 started, 6 missing.
+- **Verified results (ATT mean [lo, hi])**:
+  - grid4x4: trf_coord 36.4s, equal **26.7s** @ 200 eps
+  - cologne3: trf_coord 12.7s, equal **11.9s** @ 400 eps
+  - cologne8: trf_coord 24.0s, equal **16.9s** @ 400 eps
+  - ingolstadt7: trf_coord 14.8s @ 100 eps, equal **10.8s** @ 400 eps
+  - ingolstadt21: trf_coord **21.9s**, equal 25.8s @ 200 eps
+- **Integrity**: All 35 combos pass (no NaN, no zero travel, variance OK)
+- **Resume**: `bash run_ep_count_parallel.sh`
+- **Next**: Complete ep count study → `eval_ep_count.py` → Phase 4 (figures) + Phase 5 (manuscript)

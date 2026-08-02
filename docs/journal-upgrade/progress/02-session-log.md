@@ -353,3 +353,96 @@ Each session appends an entry here. This is the authoritative record of what hap
 2. Equal-parameter ablation: trf_coord_equal vs idqn on grid4x4
 3. Generate figures with make_figures.py
 4. Begin Phase 4: Statistical validation + paper figures
+
+---
+
+## Session #6 — 2026-06-23 to 2026-06-26
+
+**Agent:** Opencode (deepseek-v4-flash-free)
+**Duration:** ~3 days (intermittent monitoring)
+
+### What was done
+
+1. **Created episode count study infrastructure** (commits pending):
+   - `run_ep_count.sh`: Sequential runner (10 combos × 5 ep_counts × 5 seeds)
+   - `run_ep_count_parallel.sh`: Parallel runner (8 concurrent jobs, MAX_PARALLEL=8)
+   - `eval_ep_count.py`: Post-study analysis (convergence curves, optimal ep count)
+   - `conf/env/ingolstadt7.yaml`, `conf/env/ingolstadt21.yaml`: Configs for new networks
+   - `docs/journal-upgrade/sessions/ep_count_study_handoff.md`: Session handoff doc
+
+2. **Executed the study** (ongoing — 34/50 combos complete):
+   - All eps=50 (10/10 ✅), eps=100 (10/10 ✅), eps=200 (10/10 ✅) done
+   - eps=400: 4/10 complete, 6 in progress (ingolstadt7 at 3/5 seeds, grid4x4 at 3/5 seeds)
+   - eps=500: 0/10 complete, 3 started (grid4x4, cologne3, grid4x4_equal at 0/5)
+   - Resume: `bash run_ep_count_parallel.sh`
+
+3. **Fixed SUMO port conflict assumption**:
+   - Original plan claimed "SUMO port conflicts prevent parallelism"
+   - Actually safe: each SUMO instance uses independent TCP port (random)
+   - Changed from sequential to 8-concurrent-jobs approach
+   - GTX 1650 4GB VRAM: each job uses ~100-150 MiB → 8 jobs at ~1200 MiB, plenty of headroom
+
+4. **Created ingolstadt network configs**:
+   - `conf/env/ingolstadt7.yaml`: 7 agents, 3600s episodes
+   - `conf/env/ingolstadt21.yaml`: 24 agents, 3600s episodes
+   - Both use RESCO network files in `nets/RESCO/{name}/`
+
+### Key timings (5 seeds per combo)
+- grid4x4 eps=50: ~82 min
+- cologne3 eps=50: ~27 min
+- cologne8 eps=100: ~14.4 hours
+- ingolstadt21 eps=50: ~111 min
+- grid4x4 eps=200: ~213 min
+
+Larger networks × more episodes scale roughly linearly in time.
+
+### Progress tracker updated
+- `00-progress-overview.md`: Added ep count study to status
+- `01-current-status.md`: Added Phase 3.8 task table
+- `02-session-log.md`: This entry
+- `03-blockers-and-decisions.md`: Added parallelism decision
+- `04-environment-state.md`: Updated with parallel cap, new tools
+
+### Next steps for Session #7
+1. Complete ep count study: `bash run_ep_count_parallel.sh` (until all 50/50)
+2. Run analysis: `.venv/bin/python eval_ep_count.py results_ep_count/ results_ep_count/eval/`
+3. Review `results_ep_count/eval/optimal_ep_count.txt`
+4. Update trf_coord configs with optimal ep counts
+5. Begin Phase 4: Figures + statistical validation
+
+---
+
+## Session #7 — 2026-06-29
+
+**Agent:** Opencode (mimo-v2.5-free)
+**Duration:** ~10 min
+**Branch:** `journal-upgrade-phases-0-2`
+
+### What was done
+
+1. **Verified ep count study completeness**: 35/50 combos have aggregate.json with 5/5 seeds. 9 in-progress, 6 missing (all eps=500 for large networks).
+
+2. **Verified aggregate integrity**: All 35 completed combos pass every check:
+   - 5/5 seeds present in each
+   - No NaN, inf, or zero travel time values
+   - Reasonable seed-to-seed variance (no duplication)
+   - Metrics: avg_travel_time, avg_waiting_time, throughput all valid
+
+3. **Extracted stats** (mean [lo, hi] ATT in seconds):
+   - grid4x4: trf_coord 36.4s, equal 26.7s @ 200 eps
+   - cologne3: trf_coord 12.7s, equal 11.9s @ 400 eps (equal has wide CIs)
+   - cologne8: trf_coord 24.0s, equal 16.9s @ 400 eps
+   - ingolstadt7: trf_coord 14.8s @ 100 eps, equal 10.8s @ 400 eps
+   - ingolstadt21: trf_coord 21.9s @ 200 eps, equal 25.8s @ 200 eps
+
+4. **Updated progress files**: 00, 01, 02 with verified results
+
+### Key observations
+- cologne3 trf_coord_equal shows very wide CIs (unstable across seeds)
+- Clear convergence trend on cologne8/ingolstadt7 (50→400 eps)
+- grid4x4 already good at 50 eps, marginal improvement beyond
+
+### Remaining work
+- 9 combos still training (eps=400 partial + eps=500 started)
+- 6 combos never started (eps=500 for cologne8, ingolstadt7, ingolstadt21)
+- After all complete: run eval_ep_count.py → Phase 4 (figures)

@@ -1,9 +1,9 @@
 # 01 — Current Status (Task-Level Tracker)
 
-> **Last updated:** 2026-06-16 — Session #5 (Phases 0–3 complete, all experiments on grid4x4 + cologne3 done)
+> **Last updated:** 2026-06-29 — Session #7 (Ep count study verified, 35/50 complete)
 
-## Active phase: Phase 3 — Baselines & Ablations (COMPLETE)
-**Overall status:** 🟢 Phases 0–3 DONE. grid4x4 + cologne3 results collected. Phase 4 (figures) next.
+## Active phase: Phase 3.8 — Episode Count Convergence Study (PARTIAL)
+**Overall status:** 🟢 Phases 0–3 DONE. Ep count study 35/50 combos verified clean. 15 remaining (9 in-progress, 6 missing). Phase 4 (figures) next after completion.
 
 ---
 
@@ -65,11 +65,88 @@
 
 ---
 
+## Phase 3.8 — Episode Count Convergence Study
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 3.8.0 | Create plan & scripts (`run_ep_count.sh`, `eval_ep_count.py`) | ✅ **Done** |
+| 3.8.1 | Run trf_coord × trf_coord_equal × 5 nets × [50,100,200,400,500] eps | 🟡 **35/50 combos verified** |
+| 3.8.2 | Verify aggregate integrity | ✅ **Done** — all 35 pass (no NaN, no zero travel, variance OK) |
+| 3.8.3 | Run `eval_ep_count.py` analysis | 🔴 Pending (after all runs complete) |
+
+### Completeness Matrix (verified 2026-06-29)
+
+```
+                    eps50    eps100   eps200   eps400   eps500
+─────────────────────────────────────────────────────────────
+trf_coord
+  grid4x4          [5/5]    [5/5]    [5/5]    [3/5]    [0/5]
+  cologne3         [5/5]    [5/5]    [5/5]    [5/5]    [1/5]
+  cologne8         [5/5]    [5/5]    [5/5]    [5/5]    ─
+  ingolstadt7      [5/5]    [5/5]    [5/5]    [4/5]    ─
+  ingolstadt21     [5/5]    [5/5]    [5/5]    [1/5]    ─
+
+trf_coord_equal
+  grid4x4          [5/5]    [5/5]    [5/5]    [2/5]    [0/5]
+  cologne3         [5/5]    [5/5]    [5/5]    [5/5]    [0/5]
+  cologne8         [5/5]    [5/5]    [5/5]    [5/5]    ─
+  ingolstadt7      [5/5]    [5/5]    [5/5]    [5/5]    ─
+  ingolstadt21     [5/5]    [5/5]    [5/5]    [0/5]    ─
+```
+
+### Verified Results — ATT (s) mean [lo, hi]
+
+**grid4x4:**
+| Ep | trf_coord | trf_coord_equal |
+|----|-----------|-----------------|
+| 50 | 39.3 [31.5, 45.3] | 40.8 [33.3, 48.1] |
+| 100 | 41.0 [30.5, 50.4] | 41.1 [34.0, 48.2] |
+| 200 | 36.4 [27.7, 45.7] | **26.7 [20.3, 32.5]** |
+
+**cologne3:**
+| Ep | trf_coord | trf_coord_equal |
+|----|-----------|-----------------|
+| 50 | 19.0 [11.6, 26.7] | 38.0 [15.6, 73.6] |
+| 100 | 14.7 [9.6, 21.8] | 59.7 [11.4, 148.0] |
+| 200 | 12.7 [6.2, 20.9] | 35.1 [6.5, 80.1] |
+| 400 | 17.6 [10.2, 24.6] | **11.9 [3.8, 20.8]** |
+
+**cologne8:**
+| Ep | trf_coord | trf_coord_equal |
+|----|-----------|-----------------|
+| 50 | 39.0 [32.7, 46.5] | 42.0 [35.5, 50.1] |
+| 100 | 41.3 [30.4, 52.0] | 46.1 [28.5, 66.2] |
+| 200 | 28.1 [19.5, 35.8] | 29.4 [23.1, 35.2] |
+| 400 | 24.0 [14.7, 34.8] | **16.9 [10.9, 24.4]** |
+
+**ingolstadt7:**
+| Ep | trf_coord | trf_coord_equal |
+|----|-----------|-----------------|
+| 50 | 16.9 [13.6, 20.4] | 18.0 [14.8, 21.2] |
+| 100 | 14.8 [11.1, 19.2] | 14.9 [12.5, 17.2] |
+| 200 | 19.8 [12.0, 27.9] | 16.3 [10.1, 23.6] |
+| 400 | ─ | **10.8 [6.8, 18.1]** |
+
+**ingolstadt21:**
+| Ep | trf_coord | trf_coord_equal |
+|----|-----------|-----------------|
+| 50 | 38.9 [23.3, 66.3] | 29.7 [25.0, 34.7] |
+| 100 | 30.8 [20.7, 45.9] | 25.8 [22.7, 29.3] |
+| 200 | **21.9 [15.1, 29.2]** | 23.1 [16.9, 33.1] |
+
+### Key Findings
+1. **cologne3 trf_coord_equal unstable** — very wide CIs (59.7 [11.4, 148.0] at 100 eps)
+2. **Convergence trend**: cologne8, ingolstadt7 show clear ATT improvement 50→400 eps
+3. **grid4x4 flat** — already good at 50 eps, marginal gain to 200
+4. **Resume**: `bash run_ep_count_parallel.sh` (auto-skips completed combos)
+
+---
+
 ## Phase 4–5 — Next
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 4.1 | Generate learning curves | 🟡 Next |
+| 4.1 | Generate learning curves | 🟡 Pending (after ep count study) |
 | 4.2 | Attention heatmap | 🔴 Not Started |
 | 4.3 | IQM performance profiles | 🔴 Not Started |
 | 4.4 | Results table (LaTeX) | 🔴 Not Started |
